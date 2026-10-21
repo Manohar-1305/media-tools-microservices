@@ -17,7 +17,7 @@ docker run -d --name user --network media-tools-network --restart unless-stopped
 docker logs -f user
 
 grep -n -A100 -B10 'change-password-form' static/index.html
-===========
+=============================================================
 # Credentials
 Username: media_user
 Password: CHANGE_THIS_PASSWORD
@@ -28,4 +28,4 @@ DN: media_tools (database name, if you mean the database/schema name)
 Root password: CHANGE_ROOT_PASSWORD
 
 
-for c in media-tools-gateway audio-cutter audio-joiner audio-to-video video-cutter user media-mysql; do echo "===== $c ====="; docker inspect -f 'Status={{.State.Status}} Network={{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}' "$c" 2>/dev/null || echo "MISSING"; docker logs --tail 15 "$c" 2>&1; done; docker network inspect media-tools-network
+
