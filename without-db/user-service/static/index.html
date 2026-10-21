@@ -3,22 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
     <title>User Account | Media Tools</title>
-    <link rel="stylesheet" href="/user/static/style.css">
+    <link rel="stylesheet" href="/user/static/style.css?v=20261021-4">
 </head>
 <body>
     <main class="account-container">
-        <a class="back-link" href="/">← Media Tools</a>
+        <a class="back-link" href="/">
+            <span aria-hidden="true">←</span> Media Tools
+        </a>
 
         <section class="account-card">
-            <h1 id="page-title">Create Account</h1>
-            <p id="page-description">Create an account to get started.</p>
+            <div class="brand-mark" aria-hidden="true">M</div>
 
-            <div class="tabs">
-                <button id="register-tab" type="button" onclick="showMode('register')">
+            <h1 id="page-title">Create your account</h1>
+            <p id="page-description" class="page-description">
+                Get started with your Media Tools account.
+            </p>
+
+            <div class="tabs" id="account-tabs" role="tablist">
+                <button id="register-tab" type="button"
+                        role="tab" aria-selected="true"
+                        onclick="showMode('register')">
                     Create Account
                 </button>
-                <button id="login-tab" type="button" onclick="showMode('login')">
+                <button id="login-tab" type="button"
+                        role="tab" aria-selected="false"
+                        onclick="showMode('login')">
                     Login
                 </button>
             </div>
@@ -26,39 +37,78 @@
             <form id="register-form">
                 <label for="register-username">Username</label>
                 <input id="register-username" name="username"
+                       placeholder="Choose a username"
                        autocomplete="username" required>
 
-                <label for="register-email">Email</label>
+                <label for="register-email">Email address</label>
                 <input id="register-email" name="email" type="email"
+                       placeholder="you@example.com"
                        autocomplete="email" required>
 
                 <label for="register-password">Password</label>
                 <input id="register-password" name="password" type="password"
+                       placeholder="At least 8 characters"
                        autocomplete="new-password" minlength="8" required>
 
-                <button class="submit-button" type="submit">Create Account</button>
+                <button class="submit-button" type="submit">
+                    Create Account <span aria-hidden="true">→</span>
+                </button>
+
+                <p class="form-footer">
+                    Already have an account?
+                    <button class="text-button" type="button"
+                            onclick="showMode('login')">Sign in</button>
+                </p>
             </form>
 
             <form id="login-form" hidden>
-                <label for="login-username">Username or Email</label>
+                <label for="login-username">Username or email</label>
                 <input id="login-username" name="username"
+                       placeholder="Enter your username or email"
                        autocomplete="username" required>
 
                 <label for="login-password">Password</label>
                 <input id="login-password" name="password" type="password"
+                       placeholder="Enter your password"
                        autocomplete="current-password" required>
 
-                <button class="submit-button" type="submit">Login</button>
+                <div class="form-options">
+                    <a href="/user/forgot-password">Forgot password?</a>
+                </div>
+
+                <button class="submit-button" type="submit">
+                    Sign In <span aria-hidden="true">→</span>
+                </button>
+
+                <p class="form-footer">
+                    New to Media Tools?
+                    <button class="text-button" type="button"
+                            onclick="showMode('register')">Create an account</button>
+                </p>
             </form>
 
-            <p id="message" role="status"></p>
+            <p id="message" role="status" aria-live="polite"></p>
+
+            <div class="security-note">
+                <span aria-hidden="true">🔒</span>
+                Your account information is protected.
+            </div>
         </section>
+
+        <footer class="page-footer">
+            Media Tools &middot; Your tools, all in one place
+        </footer>
     </main>
 
     <script>
         const registerForm = document.getElementById("register-form");
         const loginForm = document.getElementById("login-form");
         const message = document.getElementById("message");
+
+        function showMessage(text, type = "") {
+            message.textContent = text;
+            message.className = type;
+        }
 
         function showMode(mode) {
             const isLogin = mode === "login";
@@ -67,18 +117,24 @@
             loginForm.hidden = !isLogin;
 
             document.getElementById("page-title").textContent =
-                isLogin ? "Login" : "Create Account";
+                isLogin ? "Welcome back" : "Create your account";
 
             document.getElementById("page-description").textContent =
                 isLogin
-                    ? "Sign in to your account."
-                    : "Create an account to get started.";
+                    ? "Sign in to continue to Media Tools."
+                    : "Get started with your Media Tools account.";
 
             document.getElementById("register-tab").classList.toggle("active", !isLogin);
             document.getElementById("login-tab").classList.toggle("active", isLogin);
 
-            message.textContent = "";
-            message.className = "";
+            document.getElementById("register-tab").setAttribute(
+                "aria-selected", String(!isLogin)
+            );
+            document.getElementById("login-tab").setAttribute(
+                "aria-selected", String(isLogin)
+            );
+
+            showMessage("");
 
             const url = new URL(window.location.href);
             url.searchParams.set("mode", mode);
@@ -87,19 +143,20 @@
 
         async function submitForm(event, endpoint) {
             event.preventDefault();
-
-            message.textContent = "Please wait...";
-            message.className = "";
-
             const form = event.currentTarget;
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalText = submitButton.textContent;
+
+            submitButton.disabled = true;
+            submitButton.textContent = "Please wait...";
+            showMessage("Processing your request...");
+
             const payload = Object.fromEntries(new FormData(form).entries());
 
             try {
                 const response = await fetch("/user/" + endpoint, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: {"Content-Type": "application/json"},
                     body: JSON.stringify(payload)
                 });
 
@@ -110,24 +167,26 @@
                 }
 
                 if (endpoint === "login") {
-                    localStorage.setItem(
-                        "mediaToolsUsername",
-                        result.user.username
-                    );
-                    window.location.href = "/";
+                    localStorage.setItem("mediaToolsUsername", result.user.username);
+                    localStorage.setItem("mediaToolsEmail", result.user.email);
+                    window.location.replace("/");
                     return;
                 }
 
                 form.reset();
                 showMode("login");
-                message.textContent =
-                    "Account created successfully. You can now log in.";
-                message.className = "success";
-
+                showMessage(
+                    "Account created successfully. You can now sign in.",
+                    "success"
+                );
             } catch (error) {
-                message.textContent =
-                    error.message || "Unable to contact the user service.";
-                message.className = "error";
+                showMessage(
+                    error.message || "Unable to contact the user service.",
+                    "error"
+                );
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = originalText;
             }
         }
 
