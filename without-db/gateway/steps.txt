@@ -22,6 +22,8 @@ docker build -t media-tools-gateway:latest .
 docker rm -f media-tools-gateway 2>/dev/null || true
 docker run -d --name media-tools-gateway --network media-tools-network --restart unless-stopped -p 5000:5000 --env-file .env media-tools-gateway:latest
 
+docker build --no-cache -t media-tools-gateway:latest . && docker rm -f gateway && docker run -d --name gateway --network media-tools-network --env-file .env -p 5000:5000 --restart unless-stopped media-tools-gateway:latest && docker logs -f gateway
+
 docker ps
 
 ============
