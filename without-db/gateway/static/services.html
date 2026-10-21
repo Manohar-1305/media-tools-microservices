@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Service Status | Media Tools</title>
+
+    <style>
+      :root {
+        --bg: #080d19;
+        --panel: #101a2d;
+        --border: #263651;
+        --text: #f4f7ff;
+        --muted: #91a2c2;
+        --purple: #7964f4;
+        --green: #37d6a4;
+        --red: #ff7185;
+        --orange: #ffbf69;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(ellipse at top, #17213b 0%, transparent 55%),
+          var(--bg);
+        color: var(--text);
+        font-family: "Segoe UI", Arial, sans-serif;
+      }
+
+      .container {
+        width: min(100% - 32px, 900px);
+        margin: auto;
+        padding: 28px 0 45px;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 45px;
+      }
+
+      .brand {
+        font-size: 19px;
+        font-weight: 750;
+      }
+
+      .brand small {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 400;
+      }
+
+      .home-button,
+      .test-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        padding: 10px 15px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #131f34;
+        color: var(--text);
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 650;
+        cursor: pointer;
+      }
+
+      .test-button {
+        border-color: transparent;
+        background: linear-gradient(100deg, #8d7aff, #7058ed);
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: wait;
+      }
+
+      .heading {
+        margin-bottom: 27px;
+      }
+
+      .eyebrow {
+        display: inline-block;
+        margin-bottom: 12px;
+        padding: 5px 10px;
+        border: 1px solid #7964f455;
+        border-radius: 999px;
+        background: #7964f414;
+        color: #b8acff;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.7px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(27px, 5vw, 38px);
+        letter-spacing: -1px;
+      }
+
+      .subtitle {
+        margin: 10px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 25px;
+      }
+
+      .summary-card {
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 13px;
+        background: var(--panel);
+      }
+
+      .summary-label {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .summary-value {
+        display: block;
+        margin-top: 7px;
+        font-size: 25px;
+        font-weight: 750;
+      }
+
+      .summary-value.green {
+        color: var(--green);
+      }
+
+      .summary-value.red {
+        color: var(--red);
+      }
+
+      .service-panel {
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 15px;
+        background: linear-gradient(150deg, #121e33, #0e1728);
+      }
+
+      .panel-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        padding: 21px 23px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .panel-heading h2 {
+        margin: 0;
+        font-size: 15px;
+      }
+
+      .last-checked {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 10px;
+      }
+
+      .service-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        min-height: 67px;
+        padding: 14px 23px;
+        border-bottom: 1px solid #26365199;
+      }
+
+      .service-row:last-child {
+        border-bottom: 0;
+      }
+
+      .service-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .service-icon {
+        display: grid;
+        place-items: center;
+        flex: 0 0 37px;
+        width: 37px;
+        height: 37px;
+        border: 1px solid #34445f;
+        border-radius: 10px;
+        background: #0a1323;
+        color: #b8acff;
+        font-size: 15px;
+      }
+
+      .service-name {
+        overflow-wrap: anywhere;
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .service-description {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 10px;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 6px 9px;
+        border: 1px solid #435477;
+        border-radius: 999px;
+        background: #0a1323;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 750;
+        white-space: nowrap;
+      }
+
+      .status::before {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        content: "";
+      }
+
+      .status.healthy {
+        border-color: #37d6a444;
+        background: #37d6a411;
+        color: var(--green);
+      }
+
+      .status.unhealthy {
+        border-color: #ffbf6944;
+        background: #ffbf6911;
+        color: var(--orange);
+      }
+
+      .status.unreachable {
+        border-color: #ff718544;
+        background: #ff718511;
+        color: var(--red);
+      }
+
+      .status.checking {
+        color: #b8acff;
+      }
+
+      .message {
+        padding: 20px;
+        color: var(--muted);
+        font-size: 12px;
+        text-align: center;
+      }
+
+      .footer {
+        margin-top: 25px;
+        color: #647592;
+        font-size: 10px;
+        text-align: center;
+      }
+
+      @media (max-width: 600px) {
+        .container {
+          width: min(100% - 22px, 900px);
+          padding-top: 20px;
+        }
+
+        .topbar {
+          margin-bottom: 32px;
+        }
+
+        .summary {
+          gap: 8px;
+        }
+
+        .summary-card {
+          padding: 12px;
+        }
+
+        .summary-value {
+          font-size: 21px;
+        }
+
+        .panel-heading {
+          padding: 16px;
+        }
+
+        .service-row {
+          padding: 13px 15px;
+        }
+
+        .service-description {
+          max-width: 190px;
+        }
+
+        .status {
+          padding: 5px 7px;
+          font-size: 8px;
+        }
+      }
+
+      @media (max-width: 380px) {
+        .summary-label {
+          font-size: 9px;
+        }
+
+        .service-icon {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="container">
+      <header class="topbar">
+        <div class="brand">
+          Media Tools
+          <small>Microservice monitoring</small>
+        </div>
+
+        <a class="home-button" href="/">⌂ Home</a>
+      </header>
+
+      <section class="heading">
+        <span class="eyebrow">SYSTEM MONITORING</span>
+        <h1>Service Status</h1>
+        <p class="subtitle">
+          Check the health and availability of your Media Tools microservices.
+        </p>
+      </section>
+
+      <section class="summary">
+        <div class="summary-card">
+          <span class="summary-label">Total services</span>
+          <span class="summary-value" id="total-count">10</span>
+        </div>
+
+        <div class="summary-card">
+          <span class="summary-label">Healthy</span>
+          <span class="summary-value green" id="healthy-count">—</span>
+        </div>
+
+        <div class="summary-card">
+          <span class="summary-label">Issues detected</span>
+          <span class="summary-value red" id="issue-count">—</span>
+        </div>
+      </section>
+
+      <section class="service-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Microservices</h2>
+            <div class="last-checked" id="last-checked">
+              Waiting for first health check...
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="test-button"
+            id="test-all"
+            onclick="checkServices()"
+          >
+            Test All
+          </button>
+        </div>
+
+        <div id="service-list">
+          <div class="message">Checking services...</div>
+        </div>
+      </section>
+
+      <footer class="footer">Media Tools · Service Status Dashboard</footer>
+    </main>
+
+    <script>
+      const serviceDescriptions = {
+        "audio-cutter": "Trim audio files",
+        "audio-joiner": "Combine audio files",
+        "audio-to-video": "Convert audio to MP4",
+        "image-to-pdf": "Convert images to PDF",
+        "pdf-to-jpg": "Convert PDF pages to JPG or extract embedded images",
+        "pdf-combiner": "Combine PDF documents",
+        "pdf-converter": "Convert documents to PDF",
+        user: "User and account service",
+        "video-cutter": "Trim video files",
+        "video-subtitle": "Burn SRT subtitles into videos",
+        "word-to-pdf": "Convert Word documents to PDF",
+        "pdf-to-word": "Convert PDF documents to Word",
+        "image-compressor": "Compress images and reduce file size",
+        "video-to-gif": "Convert videos into animated GIFs",
+        "video-to-reels":
+          "Create vertical videos for YouTube Shorts and Instagram Reels",
+      };
+
+      const serviceIcons = {
+        "audio-cutter": "♫",
+        "audio-joiner": "♫",
+        "audio-to-video": "▶",
+        "image-to-pdf": "▧",
+        "pdf-to-jpg": "▤",
+        "pdf-combiner": "▤",
+        "pdf-converter": "▧",
+        user: "♙",
+        "video-cutter": "▷",
+        "video-subtitle": "CC",
+        "word-to-pdf": "W",
+        "pdf-to-word": "W",
+        "image-compressor": "IMG",
+        "video-to-gif": "GIF",
+        "video-to-reels": "9:16",
+      };
+
+      const serviceList = document.getElementById("service-list");
+      const testAllButton = document.getElementById("test-all");
+
+      function displayName(name) {
+        return name
+          .split("-")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+      }
+
+      function renderServices(services) {
+        const fragment = document.createDocumentFragment();
+        let healthy = 0;
+        let issues = 0;
+
+        const entries = Object.entries(services).sort(([a], [b]) =>
+          displayName(a).localeCompare(displayName(b)),
+        );
+
+        document.getElementById("total-count").textContent = entries.length;
+
+        for (const [name, rawStatus] of entries) {
+          const status = String(rawStatus).toLowerCase();
+
+          if (status === "healthy") {
+            healthy++;
+          } else {
+            issues++;
+          }
+
+          const row = document.createElement("div");
+          row.className = "service-row";
+
+          const info = document.createElement("div");
+          info.className = "service-info";
+
+          const icon = document.createElement("div");
+          icon.className = "service-icon";
+          icon.textContent = serviceIcons[name] || "●";
+          icon.setAttribute("aria-hidden", "true");
+
+          const details = document.createElement("div");
+
+          const title = document.createElement("div");
+          title.className = "service-name";
+          title.textContent = displayName(name);
+
+          const description = document.createElement("div");
+          description.className = "service-description";
+          description.textContent =
+            serviceDescriptions[name] || "Microservice health check";
+
+          details.append(title, description);
+          info.append(icon, details);
+
+          const badge = document.createElement("span");
+          badge.className =
+            "status " +
+            (["healthy", "unhealthy", "unreachable"].includes(status)
+              ? status
+              : "checking");
+
+          badge.textContent = status.toUpperCase();
+
+          row.append(info, badge);
+          fragment.appendChild(row);
+        }
+
+        serviceList.replaceChildren(fragment);
+
+        document.getElementById("healthy-count").textContent = healthy;
+        document.getElementById("issue-count").textContent = issues;
+        document.getElementById("healthy-count").className =
+          "summary-value " + (healthy > 0 ? "green" : "");
+        document.getElementById("issue-count").className =
+          "summary-value " + (issues > 0 ? "red" : "");
+
+        document.getElementById("last-checked").textContent =
+          "Last checked: " + new Date().toLocaleTimeString();
+      }
+
+      async function checkServices() {
+        testAllButton.disabled = true;
+        testAllButton.textContent = "Testing...";
+
+        try {
+          const response = await fetch("/api/services", {
+            cache: "no-store",
+          });
+
+          if (!response.ok) {
+            throw new Error("Health check request failed.");
+          }
+
+          const services = await response.json();
+          renderServices(services);
+        } catch (error) {
+          serviceList.replaceChildren();
+
+          const message = document.createElement("div");
+          message.className = "message";
+          message.textContent =
+            "Unable to retrieve service status. Check that the gateway is running.";
+          serviceList.appendChild(message);
+
+          document.getElementById("last-checked").textContent =
+            "Health check failed";
+        } finally {
+          testAllButton.disabled = false;
+          testAllButton.textContent = "Test All";
+        }
+      }
+
+      checkServices();
+      setInterval(checkServices, 60000);
+    </script>
+  </body>
+</html>

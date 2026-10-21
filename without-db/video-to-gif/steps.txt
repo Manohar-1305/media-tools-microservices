@@ -1,0 +1,9 @@
+docker build -t video-to-gif:latest .
+
+docker run -d --name video-to-gif --network media-tools-network -p 5014:5014 --restart unless-stopped video-to-gif:latest
+
+docker ps
+
+docker logs --tail 50 video-to-gif
+
+curl http://localhost:5014/health

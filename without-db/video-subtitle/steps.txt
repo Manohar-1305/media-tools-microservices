@@ -1,0 +1,5 @@
+docker build -t video-subtitle:latest ./video-subtitle
+
+docker run -d --name video-subtitle --network media-tools-network -p 5010:5010 --restart unless-stopped video-subtitle:latest
+
+docker logs -f video-subtitle

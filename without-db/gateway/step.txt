@@ -1,0 +1,17 @@
+docker build -t media-gateway .
+docker run -d --name media-gateway -p 5000:5000 media-gateway
+curl http://localhost:5000/health
+
+Output:
+{"service":"gateway","status":"ok"}
+
+notepad C:\Windows\System32\drivers\etc\hosts
+
+ipconfig /flushdns
+
+127.0.0.1 audio-cutter
+127.0.0.1 audio-joiner
+127.0.0.1 video-cutter
+127.0.0.1 pdf-converter
+127.0.0.1 pdf-combiner
+127.0.0.1 user

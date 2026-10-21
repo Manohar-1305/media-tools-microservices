@@ -1,0 +1,127 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  color: #202124;
+}
+
+.account-container {
+  width: 100%;
+  max-width: 480px;
+  margin: 55px auto;
+  padding: 0 18px;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 18px;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.account-card {
+  padding: 30px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgb(0 0 0 / 4%);
+}
+
+.account-card h1 {
+  margin: 0 0 10px;
+  font-size: 28px;
+}
+
+.account-card > p {
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin: 25px 0;
+}
+
+.tabs button {
+  flex: 1;
+  padding: 11px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  background: #fff;
+  color: #374151;
+  cursor: pointer;
+}
+
+.tabs button.active {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+
+form label {
+  display: block;
+  margin: 16px 0 7px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+form input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  font-size: 15px;
+}
+
+form input:focus {
+  outline: 2px solid #bfdbfe;
+  border-color: #2563eb;
+}
+
+.submit-button {
+  width: 100%;
+  margin-top: 23px;
+  padding: 13px;
+  border: 0;
+  border-radius: 7px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.submit-button:hover {
+  background: #1d4ed8;
+}
+
+#message {
+  margin-bottom: 0;
+  overflow-wrap: anywhere;
+}
+
+#message.success {
+  color: #15803d;
+}
+
+#message.error {
+  color: #dc2626;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 480px) {
+  .account-container {
+    margin-top: 25px;
+  }
+
+  .account-card {
+    padding: 22px;
+  }
+}

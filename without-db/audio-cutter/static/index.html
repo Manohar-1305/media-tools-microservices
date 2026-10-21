@@ -1,0 +1,972 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Audio Cutter | Media Tools</title>
+    <link rel="stylesheet" href="/audio-cutter/static/style.css" />
+    <script src="https://unpkg.com/wavesurfer.js@7"></script>
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
+  </head>
+  <body>
+    <a href="/" class="home-button">⌂ Home</a>
+
+    <main class="editor">
+      <header class="editor-header">
+        <div>
+          <a class="back-link" href="/">← Media Tools</a>
+          <h1>Audio Cutter</h1>
+          <p>Trim your audio with precision.</p>
+        </div>
+        <button type="button" id="reset-button" class="reset-button">
+          ↺ Reset
+        </button>
+      </header>
+
+      <section class="upload-section">
+        <label class="upload-button" for="audio-file">
+          <span class="upload-icon">↑</span>
+          <span>
+            <strong>Choose an audio file</strong>
+            <small id="file-name">MP3, WAV, OGG, M4A</small>
+          </span>
+        </label>
+        <input
+          id="audio-file"
+          type="file"
+          accept="audio/*,.mp3,.wav,.aac,.m4a,.ogg,.flac,.wma"
+          hidden
+        />
+      </section>
+
+      <section class="waveform-section">
+        <div class="waveform-toolbar">
+          <span class="toolbar-label"
+            ><span class="live-dot"></span> WAVEFORM EDITOR</span
+          >
+          <span id="duration-label">00:00.0</span>
+        </div>
+
+        <div id="waveform-wrapper">
+          <div id="waveform-placeholder">
+            <span class="placeholder-icon">〰</span>
+            <span>Select an audio file to display its waveform</span>
+          </div>
+          <div id="waveform"></div>
+
+          <div id="trim-overlay">
+            <div class="trim-shade trim-shade-left"></div>
+            <div class="trim-shade trim-shade-right"></div>
+
+            <div
+              class="trim-handle trim-handle-left"
+              data-handle="left"
+              role="slider"
+              tabindex="0"
+              aria-label="Trim start"
+            >
+              <span class="trim-grip">⋮</span>
+              <span class="trim-time trim-time-top" id="start-time-top"
+                >00:00.0</span
+              >
+              <span class="trim-time trim-time-bottom" id="start-time-bottom"
+                >00:00.0</span
+              >
+            </div>
+
+            <div
+              class="trim-handle trim-handle-right"
+              data-handle="right"
+              role="slider"
+              tabindex="0"
+              aria-label="Trim end"
+            >
+              <span class="trim-grip">⋮</span>
+              <span class="trim-time trim-time-top" id="end-time-top"
+                >00:00.0</span
+              >
+              <span class="trim-time trim-time-bottom" id="end-time-bottom"
+                >00:00.0</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline">
+          <span id="start-timeline">00:00.0</span>
+          <span id="current-timeline">00:00.0</span>
+          <span id="end-timeline">00:00.0</span>
+        </div>
+      </section>
+
+      <section class="controls">
+        <button
+          type="button"
+          id="play-button"
+          class="control-button play-button"
+          disabled
+        >
+          <span id="play-icon">▶</span>
+          <span id="play-label">Play Selection</span>
+        </button>
+
+        <button
+          type="button"
+          id="selection-button"
+          class="control-button"
+          disabled
+        >
+          ↻ Replay Selection
+        </button>
+
+        <div class="time-controls">
+          <label class="time-field">
+            <span>START (MM:SS.s)</span>
+            <div class="time-input-wrap">
+              <input
+                type="text"
+                id="start-input"
+                value="00:00.0"
+                inputmode="decimal"
+                placeholder="00:00.0"
+                disabled
+              />
+              <span class="time-spinner">
+                <button
+                  type="button"
+                  class="time-step"
+                  data-field="start-input"
+                  data-direction="up"
+                  aria-label="Increase start time"
+                  disabled
+                >
+                  ▲
+                </button>
+                <button
+                  type="button"
+                  class="time-step"
+                  data-field="start-input"
+                  data-direction="down"
+                  aria-label="Decrease start time"
+                  disabled
+                >
+                  ▼
+                </button>
+              </span>
+            </div>
+            <small>minutes : seconds</small>
+          </label>
+
+          <label class="time-field">
+            <span>END (MM:SS.s)</span>
+            <div class="time-input-wrap">
+              <input
+                type="text"
+                id="end-input"
+                value="00:00.0"
+                inputmode="decimal"
+                placeholder="00:00.0"
+                disabled
+              />
+              <span class="time-spinner">
+                <button
+                  type="button"
+                  class="time-step"
+                  data-field="end-input"
+                  data-direction="up"
+                  aria-label="Increase end time"
+                  disabled
+                >
+                  ▲
+                </button>
+                <button
+                  type="button"
+                  class="time-step"
+                  data-field="end-input"
+                  data-direction="down"
+                  aria-label="Decrease end time"
+                  disabled
+                >
+                  ▼
+                </button>
+              </span>
+            </div>
+            <small>minutes : seconds</small>
+          </label>
+        </div>
+      </section>
+
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+
+      <form
+        id="cut-form"
+        action="/audio-cutter/cut"
+        method="POST"
+        enctype="multipart/form-data"
+      >
+        <input type="hidden" name="start" id="form-start" />
+        <input type="hidden" name="end" id="form-end" />
+        <input type="file" name="file" id="form-audio" hidden />
+        <button type="submit" id="cut-button" class="cut-button" disabled>
+          <span>✂</span> Cut Audio
+        </button>
+      </form>
+
+      <!-- Added: cutting and download progress bar -->
+      <div
+        id="download-progress-container"
+        hidden
+        style="margin-top: 20px; width: 100%"
+      >
+        <div
+          id="download-progress-label"
+          style="margin-bottom: 8px; font-size: 14px"
+          role="status"
+          aria-live="polite"
+        >
+          Preparing audio...
+        </div>
+        <div
+          style="
+            width: 100%;
+            height: 8px;
+            overflow: hidden;
+            border-radius: 8px;
+            background: #e5e7eb;
+          "
+        >
+          <div
+            id="download-progress-bar"
+            style="
+              width: 0%;
+              height: 100%;
+              border-radius: 8px;
+              background: #27d7c5;
+              transition: width 0.15s ease;
+            "
+          ></div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const fileInput = document.getElementById("audio-file");
+      const startInput = document.getElementById("start-input");
+      const endInput = document.getElementById("end-input");
+      const playButton = document.getElementById("play-button");
+      const playIcon = document.getElementById("play-icon");
+      const playLabel = document.getElementById("play-label");
+      const selectionButton = document.getElementById("selection-button");
+      const cutButton = document.getElementById("cut-button");
+      const message = document.getElementById("message");
+      const waveformElement = document.getElementById("waveform");
+      const placeholder = document.getElementById("waveform-placeholder");
+      const trimOverlay = document.getElementById("trim-overlay");
+      const leftHandle = trimOverlay.querySelector('[data-handle="left"]');
+      const rightHandle = trimOverlay.querySelector('[data-handle="right"]');
+      const leftShade = trimOverlay.querySelector(".trim-shade-left");
+      const rightShade = trimOverlay.querySelector(".trim-shade-right");
+      const spinnerButtons = document.querySelectorAll(".time-step");
+
+      // Added: progress bar elements
+      const downloadProgressContainer = document.getElementById(
+        "download-progress-container",
+      );
+      const downloadProgressLabel = document.getElementById(
+        "download-progress-label",
+      );
+      const downloadProgressBar = document.getElementById(
+        "download-progress-bar",
+      );
+
+      let wavesurfer = null;
+      let regions = null;
+      let selectedRegion = null;
+      let duration = 0;
+      let selectionPlayback = false;
+      let dragMode = null;
+      let activePointerId = null;
+      let dragStartTime = 0;
+      let pointerDownX = 0;
+      let pointerMoved = false;
+      let playbackEndHandler = null;
+      let holdTimer = null;
+      let repeatTimer = null;
+
+      function formatTime(value) {
+        value = Math.max(0, Number(value) || 0);
+        const minutes = Math.floor(value / 60);
+        const seconds = value - minutes * 60;
+        return (
+          String(minutes).padStart(2, "0") +
+          ":" +
+          seconds.toFixed(1).padStart(4, "0")
+        );
+      }
+
+      function parseTime(value) {
+        const match = String(value)
+          .trim()
+          .match(/^(\d+):([0-5]\d)(?:\.(\d+))?$/);
+        if (!match) return NaN;
+        return (
+          Number(match[1]) * 60 +
+          Number(match[2] + (match[3] ? "." + match[3] : ""))
+        );
+      }
+
+      function getStart() {
+        return parseTime(startInput.value);
+      }
+
+      function getEnd() {
+        return parseTime(endInput.value);
+      }
+
+      function showMessage(text, type = "") {
+        message.textContent = text;
+        message.className = "message" + (type ? " " + type : "");
+      }
+
+      function waveformRect() {
+        return waveformElement.getBoundingClientRect();
+      }
+
+      function timeFromPointer(event) {
+        const rect = waveformRect();
+        if (!rect.width || !duration) return 0;
+        return (
+          Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)) *
+          duration
+        );
+      }
+
+      function timeToPixel(time) {
+        const rect = waveformRect();
+        if (!rect.width || !duration) return 0;
+        return Math.max(
+          0,
+          Math.min(rect.width, (time / duration) * rect.width),
+        );
+      }
+
+      function updateLabels() {
+        const start = getStart();
+        const end = getEnd();
+
+        document.getElementById("start-timeline").textContent =
+          formatTime(start);
+        document.getElementById("end-timeline").textContent = formatTime(end);
+        document.getElementById("start-time-top").textContent =
+          formatTime(start);
+        document.getElementById("start-time-bottom").textContent =
+          formatTime(start);
+        document.getElementById("end-time-top").textContent = formatTime(end);
+        document.getElementById("end-time-bottom").textContent =
+          formatTime(end);
+
+        leftHandle.setAttribute("aria-valuenow", String(start));
+        leftHandle.setAttribute("aria-valuetext", formatTime(start));
+        rightHandle.setAttribute("aria-valuenow", String(end));
+        rightHandle.setAttribute("aria-valuetext", formatTime(end));
+      }
+
+      function updateHandles(start, end) {
+        if (!duration) return;
+        const rect = waveformRect();
+        const left = timeToPixel(start);
+        const right = timeToPixel(end);
+
+        leftHandle.style.left = left + "px";
+        rightHandle.style.left = right + "px";
+        leftShade.style.left = "0";
+        leftShade.style.width = left + "px";
+        rightShade.style.left = right + "px";
+        rightShade.style.width = Math.max(0, rect.width - right) + "px";
+        updateLabels();
+      }
+
+      function setSelection(start, end, announce = false) {
+        if (!duration || !Number.isFinite(start) || !Number.isFinite(end))
+          return false;
+
+        start = Math.max(0, Math.min(start, duration));
+        end = Math.max(0, Math.min(end, duration));
+        if (end - start < 0.1) return false;
+
+        startInput.value = formatTime(start);
+        endInput.value = formatTime(end);
+
+        if (selectedRegion) selectedRegion.setOptions({ start, end });
+        updateHandles(start, end);
+        if (announce) showMessage("Trim selection updated.", "success");
+        return true;
+      }
+
+      function enableControls(enabled) {
+        startInput.disabled = !enabled;
+        endInput.disabled = !enabled;
+        playButton.disabled = !enabled;
+        selectionButton.disabled = !enabled;
+        cutButton.disabled = !enabled;
+        spinnerButtons.forEach((button) => (button.disabled = !enabled));
+      }
+
+      function stopSelectionPlayback() {
+        selectionPlayback = false;
+        if (playbackEndHandler && wavesurfer) {
+          wavesurfer.un("timeupdate", playbackEndHandler);
+          playbackEndHandler = null;
+        }
+      }
+
+      function playOnlySelection(restart = true) {
+        if (!wavesurfer || !duration) return;
+
+        const start = getStart();
+        const end = getEnd();
+
+        if (
+          !Number.isFinite(start) ||
+          !Number.isFinite(end) ||
+          start < 0 ||
+          end <= start ||
+          end > duration
+        ) {
+          showMessage("Select a valid audio portion first.", "error");
+          return;
+        }
+
+        stopSelectionPlayback();
+        selectionPlayback = true;
+
+        playbackEndHandler = (currentTime) => {
+          if (currentTime >= end - 0.025) {
+            wavesurfer.pause();
+            wavesurfer.setTime(end);
+            document.getElementById("current-timeline").textContent =
+              formatTime(end);
+            stopSelectionPlayback();
+          }
+        };
+
+        wavesurfer.on("timeupdate", playbackEndHandler);
+
+        if (
+          restart ||
+          wavesurfer.getCurrentTime() < start ||
+          wavesurfer.getCurrentTime() >= end
+        ) {
+          wavesurfer.setTime(start);
+        }
+        wavesurfer.play();
+      }
+
+      function syncRegion(region) {
+        if (!selectedRegion || region !== selectedRegion || dragMode) return;
+        startInput.value = formatTime(region.start);
+        endInput.value = formatTime(region.end);
+        updateHandles(region.start, region.end);
+      }
+
+      function startDrag(event) {
+        if (!wavesurfer || !duration || event.button !== 0) return;
+
+        const handle = event.target.closest("[data-handle]");
+        const rect = waveformRect();
+
+        if (
+          !handle &&
+          (event.clientX < rect.left ||
+            event.clientX > rect.right ||
+            event.clientY < rect.top ||
+            event.clientY > rect.bottom)
+        )
+          return;
+
+        if (handle) {
+          dragMode = handle.dataset.handle;
+        } else {
+          dragMode = "new";
+          dragStartTime = timeFromPointer(event);
+        }
+
+        activePointerId = event.pointerId;
+        pointerDownX = event.clientX;
+        pointerMoved = false;
+
+        stopSelectionPlayback();
+        if (wavesurfer.isPlaying()) wavesurfer.pause();
+
+        try {
+          trimOverlay.setPointerCapture(event.pointerId);
+        } catch (_) {}
+
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      function moveDrag(event) {
+        if (!dragMode || event.pointerId !== activePointerId) return;
+        if (Math.abs(event.clientX - pointerDownX) > 2) pointerMoved = true;
+        if (!pointerMoved) return;
+
+        const time = timeFromPointer(event);
+        const start = getStart();
+        const end = getEnd();
+        const minimum = 0.1;
+
+        if (dragMode === "left") {
+          setSelection(Math.max(0, Math.min(time, end - minimum)), end);
+        } else if (dragMode === "right") {
+          setSelection(
+            start,
+            Math.min(duration, Math.max(time, start + minimum)),
+          );
+        } else if (dragMode === "new") {
+          const low = Math.min(dragStartTime, time);
+          const high = Math.max(dragStartTime, time);
+          if (high - low >= minimum) setSelection(low, high);
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      function endDrag(event) {
+        if (!dragMode || (event && event.pointerId !== activePointerId)) return;
+
+        const mode = dragMode;
+        const finalTime = event ? timeFromPointer(event) : dragStartTime;
+
+        if (mode === "new") {
+          const low = Math.min(dragStartTime, finalTime);
+          const high = Math.max(dragStartTime, finalTime);
+
+          if (pointerMoved && high - low >= 0.1) {
+            setSelection(low, high, true);
+            document.getElementById("current-timeline").textContent =
+              formatTime(low);
+            wavesurfer.setTime(low);
+          } else if (!pointerMoved) {
+            stopSelectionPlayback();
+            wavesurfer.setTime(finalTime);
+            document.getElementById("current-timeline").textContent =
+              formatTime(finalTime);
+          }
+        } else {
+          setSelection(getStart(), getEnd(), true);
+          const target = mode === "left" ? getStart() : getEnd();
+          wavesurfer.setTime(target);
+          document.getElementById("current-timeline").textContent =
+            formatTime(target);
+        }
+
+        dragMode = null;
+        activePointerId = null;
+
+        if (event) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }
+
+      function initializeWaveform(file) {
+        if (wavesurfer) {
+          wavesurfer.destroy();
+          wavesurfer = null;
+        }
+
+        selectedRegion = null;
+        regions = null;
+        duration = 0;
+        dragMode = null;
+        stopSelectionPlayback();
+
+        enableControls(false);
+        placeholder.hidden = true;
+        startInput.value = "00:00.0";
+        endInput.value = "00:00.0";
+        updateLabels();
+
+        wavesurfer = WaveSurfer.create({
+          container: waveformElement,
+          height: 190,
+          waveColor: "#27d7c5",
+          progressColor: "#4f7cff",
+          cursorColor: "#ffffff",
+          cursorWidth: 2,
+          barWidth: 2,
+          barGap: 2,
+          barRadius: 3,
+          normalize: true,
+          autoScroll: false,
+          interact: false,
+        });
+
+        regions = wavesurfer.registerPlugin(WaveSurfer.Regions.create());
+
+        wavesurfer.on("ready", (loadedDuration) => {
+          duration = loadedDuration;
+
+          selectedRegion = regions.addRegion({
+            start: 0,
+            end: duration,
+            color: "rgba(51, 115, 255, 0.08)",
+            drag: false,
+            resize: false,
+            minLength: 0.1,
+          });
+
+          enableControls(true);
+          startInput.value = formatTime(0);
+          endInput.value = formatTime(duration);
+
+          document.getElementById("duration-label").textContent =
+            formatTime(duration);
+          document.getElementById("current-timeline").textContent =
+            formatTime(0);
+          document.getElementById("file-name").textContent = file.name;
+          document.getElementById("file-name").title = file.name;
+
+          requestAnimationFrame(() => updateHandles(0, duration));
+          showMessage(
+            "Drag to select a portion. Play Selection plays only between the two handles.",
+            "success",
+          );
+        });
+
+        regions.on("region-updated", syncRegion);
+        regions.on("region-update-end", syncRegion);
+
+        wavesurfer.on("timeupdate", (time) => {
+          document.getElementById("current-timeline").textContent =
+            formatTime(time);
+        });
+
+        wavesurfer.on("play", () => {
+          playIcon.textContent = "Ⅱ";
+          playLabel.textContent = "Pause Selection";
+        });
+
+        wavesurfer.on("pause", () => {
+          playIcon.textContent = "▶";
+          playLabel.textContent = "Play Selection";
+          if (selectionPlayback) stopSelectionPlayback();
+        });
+
+        wavesurfer.on("error", (error) => {
+          enableControls(false);
+          showMessage("Unable to load this audio file.", "error");
+          console.error("WaveSurfer loading error:", error);
+        });
+
+        wavesurfer.loadBlob(file);
+      }
+
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        document.getElementById("file-name").textContent = file.name;
+        showMessage("Loading waveform...");
+        initializeWaveform(file);
+      });
+
+      trimOverlay.addEventListener("pointerdown", startDrag);
+      window.addEventListener("pointermove", moveDrag, true);
+      window.addEventListener("pointerup", endDrag, true);
+      window.addEventListener("pointercancel", endDrag, true);
+
+      function applyManualSelection() {
+        const start = getStart();
+        const end = getEnd();
+
+        if (!Number.isFinite(start) || !Number.isFinite(end)) {
+          showMessage("Use MM:SS.s format, for example 01:25.5.", "error");
+          return;
+        }
+
+        if (start < 0 || end <= start || end > duration) {
+          showMessage(
+            "End must be greater than start and within the audio duration.",
+            "error",
+          );
+          return;
+        }
+
+        setSelection(start, end, true);
+      }
+
+      startInput.addEventListener("change", applyManualSelection);
+      endInput.addEventListener("change", applyManualSelection);
+
+      function stepTime(field, direction) {
+        if (!duration || field.disabled) return;
+
+        let start = getStart();
+        let end = getEnd();
+        if (!Number.isFinite(start)) start = 0;
+        if (!Number.isFinite(end)) end = duration;
+
+        if (field === startInput) {
+          start = Math.max(0, Math.min(end - 0.1, start + direction * 0.1));
+          setSelection(start, end, true);
+        } else {
+          end = Math.max(
+            start + 0.1,
+            Math.min(duration, end + direction * 0.1),
+          );
+          setSelection(start, end, true);
+        }
+      }
+
+      spinnerButtons.forEach((button) => {
+        const field = document.getElementById(button.dataset.field);
+        const direction = button.dataset.direction === "up" ? 1 : -1;
+
+        button.addEventListener("click", () => stepTime(field, direction));
+
+        button.addEventListener("pointerdown", (event) => {
+          if (button.disabled) return;
+          event.preventDefault();
+          stepTime(field, direction);
+          clearTimeout(holdTimer);
+          clearInterval(repeatTimer);
+          holdTimer = setTimeout(() => {
+            repeatTimer = setInterval(() => stepTime(field, direction), 80);
+          }, 400);
+        });
+
+        ["pointerup", "pointerleave", "pointercancel"].forEach((name) => {
+          button.addEventListener(name, () => {
+            clearTimeout(holdTimer);
+            clearInterval(repeatTimer);
+          });
+        });
+      });
+
+      playButton.addEventListener("click", () => {
+        if (!wavesurfer) return;
+        if (wavesurfer.isPlaying()) {
+          wavesurfer.pause();
+          return;
+        }
+        playOnlySelection(true);
+      });
+
+      selectionButton.addEventListener("click", () => {
+        if (!wavesurfer) return;
+        if (wavesurfer.isPlaying() && selectionPlayback) {
+          wavesurfer.pause();
+          return;
+        }
+        playOnlySelection(true);
+      });
+
+      document.getElementById("reset-button").addEventListener("click", () => {
+        if (!wavesurfer || !duration || !selectedRegion) return;
+        wavesurfer.pause();
+        stopSelectionPlayback();
+        selectedRegion.setOptions({ start: 0, end: duration });
+        startInput.value = formatTime(0);
+        endInput.value = formatTime(duration);
+        updateHandles(0, duration);
+        wavesurfer.setTime(0);
+        showMessage("Selection reset.", "success");
+      });
+
+      document
+        .getElementById("cut-form")
+        .addEventListener("submit", async (event) => {
+          event.preventDefault();
+
+          const file = fileInput.files[0];
+          const start = getStart();
+          const end = getEnd();
+
+          if (!file) {
+            showMessage("Select an audio file first.", "error");
+            return;
+          }
+
+          if (
+            !Number.isFinite(start) ||
+            !Number.isFinite(end) ||
+            start < 0 ||
+            end <= start ||
+            end > duration
+          ) {
+            showMessage(
+              "Enter valid start and end times in MM:SS.s format.",
+              "error",
+            );
+            return;
+          }
+
+          const formData = new FormData();
+          formData.append("file", file, file.name);
+          formData.append("start", String(start));
+          formData.append("end", String(end));
+
+          cutButton.disabled = true;
+          cutButton.innerHTML = "<span>◌</span> Processing Audio...";
+          showMessage("Cutting audio...");
+
+          // Added: display progress while processing and downloading
+          downloadProgressContainer.hidden = false;
+          downloadProgressBar.style.width = "0%";
+          downloadProgressLabel.textContent = "Processing audio...";
+
+          try {
+            const blob = await new Promise((resolve, reject) => {
+              const xhr = new XMLHttpRequest();
+
+              xhr.open("POST", "/audio-cutter/cut", true);
+              xhr.responseType = "blob";
+
+              xhr.upload.addEventListener("progress", (progressEvent) => {
+                if (progressEvent.lengthComputable) {
+                  const percentage = Math.round(
+                    (progressEvent.loaded / progressEvent.total) * 100,
+                  );
+
+                  downloadProgressLabel.textContent =
+                    "Uploading audio: " + percentage + "%";
+                  downloadProgressBar.style.width = percentage + "%";
+                }
+              });
+
+              xhr.upload.addEventListener("load", () => {
+                downloadProgressLabel.textContent =
+                  "Processing audio on the server...";
+                downloadProgressBar.style.width = "100%";
+                downloadProgressBar.style.animation =
+                  "audioProgressPulse 1.2s ease-in-out infinite alternate";
+              });
+
+              xhr.addEventListener("progress", (progressEvent) => {
+                if (progressEvent.lengthComputable && progressEvent.total > 0) {
+                  const percentage = Math.round(
+                    (progressEvent.loaded / progressEvent.total) * 100,
+                  );
+
+                  downloadProgressBar.style.animation = "none";
+                  downloadProgressLabel.textContent =
+                    "Downloading cut audio: " + percentage + "%";
+                  downloadProgressBar.style.width = percentage + "%";
+                } else if (progressEvent.loaded > 0) {
+                  downloadProgressBar.style.animation = "none";
+                  downloadProgressLabel.textContent =
+                    "Downloading cut audio...";
+                }
+              });
+
+              xhr.addEventListener("load", async () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                  resolve(xhr.response);
+                } else {
+                  let errorMessage = "Unable to cut audio.";
+
+                  try {
+                    const result = JSON.parse(await xhr.response.text());
+                    errorMessage = result.error || errorMessage;
+                  } catch (_) {}
+
+                  reject(new Error(errorMessage));
+                }
+              });
+
+              xhr.addEventListener("error", () => {
+                reject(new Error("Unable to connect to the audio service."));
+              });
+
+              xhr.addEventListener("abort", () => {
+                reject(new Error("Audio processing was cancelled."));
+              });
+
+              xhr.send(formData);
+            });
+
+            downloadProgressBar.style.animation = "none";
+            downloadProgressBar.style.width = "100%";
+            downloadProgressLabel.textContent = "Download complete: 100%";
+
+            const downloadUrl = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            const extension = file.name.match(/\.[^.]+$/)?.[0] || ".mp3";
+
+            link.href = downloadUrl;
+            link.download =
+              file.name.replace(/\.[^.]+$/, "") + "_cut" + extension;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+            showMessage("Audio cut successfully. Download started.", "success");
+          } catch (error) {
+            downloadProgressBar.style.animation = "none";
+            showMessage(error.message, "error");
+            downloadProgressLabel.textContent = "Audio cutting failed.";
+          } finally {
+            cutButton.disabled = false;
+            cutButton.innerHTML = "<span>✂</span> Cut Audio";
+          }
+        });
+
+      function adjustHandleWithKeyboard(event, handle) {
+        if (!duration || !["ArrowLeft", "ArrowRight"].includes(event.key))
+          return;
+        event.preventDefault();
+
+        const delta = event.key === "ArrowRight" ? 0.1 : -0.1;
+        const start = getStart();
+        const end = getEnd();
+
+        if (handle === "left") {
+          setSelection(
+            Math.max(0, Math.min(end - 0.1, start + delta)),
+            end,
+            true,
+          );
+        } else {
+          setSelection(
+            start,
+            Math.max(start + 0.1, Math.min(duration, end + delta)),
+            true,
+          );
+        }
+      }
+
+      leftHandle.addEventListener("keydown", (event) =>
+        adjustHandleWithKeyboard(event, "left"),
+      );
+      rightHandle.addEventListener("keydown", (event) =>
+        adjustHandleWithKeyboard(event, "right"),
+      );
+
+      window.addEventListener("resize", () => {
+        if (duration) updateHandles(getStart(), getEnd());
+      });
+
+      window.addEventListener("beforeunload", () => {
+        clearTimeout(holdTimer);
+        clearInterval(repeatTimer);
+        stopSelectionPlayback();
+        if (wavesurfer) wavesurfer.destroy();
+      });
+    </script>
+
+    <!-- Added: animation used while the server processes the audio -->
+    <style>
+      @keyframes audioProgressPulse {
+        from {
+          opacity: 0.45;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+    </style>
+  </body>
+</html>

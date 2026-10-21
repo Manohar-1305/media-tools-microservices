@@ -1,0 +1,934 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Video to GIF | Media Tools</title>
+    <style>
+      :root {
+        --muted: #a0aec8;
+        --purple: #8b78ff;
+        --blue: #5479ff;
+        --text: #f4f7ff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        padding: 26px;
+        background:
+          radial-gradient(ellipse at 15% 10%, #5141a944, transparent 42%),
+          radial-gradient(ellipse at 90% 85%, #1a72a533, transparent 38%),
+          linear-gradient(135deg, #080d19, #0c1426 55%, #10172d);
+        color: var(--text);
+        font-family: "Segoe UI", Arial, sans-serif;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        width: min(100%, 1200px);
+        margin: auto;
+      }
+
+      .brand {
+        font-size: 19px;
+        font-weight: 750;
+      }
+
+      .brand small {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 400;
+      }
+
+      .home-button {
+        padding: 11px 17px;
+        border: 1px solid #465575;
+        border-radius: 10px;
+        background: #ffffff0b;
+        color: var(--text);
+        text-decoration: none;
+        font-size: 13px;
+      }
+
+      .page {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 90px);
+        padding: 38px 0;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 540px) minmax(0, 1fr);
+        align-items: center;
+        gap: 40px;
+        width: min(100%, 1200px);
+        margin: auto;
+      }
+
+      .card {
+        min-width: 0;
+        padding: 36px;
+        border: 1px solid #7183a033;
+        border-radius: 22px;
+        background: linear-gradient(145deg, #17243bdc, #101a2def);
+        box-shadow:
+          0 25px 80px #00000045,
+          inset 0 1px 0 #ffffff0b;
+        backdrop-filter: blur(18px);
+      }
+
+      .icon-box {
+        display: grid;
+        place-items: center;
+        width: 62px;
+        height: 62px;
+        margin-bottom: 23px;
+        border: 1px solid #a99bff40;
+        border-radius: 17px;
+        background: linear-gradient(145deg, #8b78ff2b, #5479ff20);
+        color: #c0b6ff;
+        font-size: 30px;
+      }
+
+      .eyebrow {
+        display: inline-block;
+        margin-bottom: 12px;
+        color: #b8acff;
+        font-size: 10px;
+        font-weight: 750;
+        letter-spacing: 1.6px;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: clamp(27px, 5vw, 36px);
+        letter-spacing: -1px;
+      }
+
+      .description {
+        margin: 0 0 26px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.8;
+      }
+
+      .field {
+        margin-top: 18px;
+      }
+
+      .field label {
+        display: block;
+        margin-bottom: 9px;
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      input[type="file"] {
+        display: block;
+        width: 100%;
+        padding: 18px;
+        border: 1px dashed #64769b;
+        border-radius: 14px;
+        background: #080f1e75;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      input[type="file"]::file-selector-button {
+        margin-right: 10px;
+        padding: 8px 11px;
+        border: 1px solid #435574;
+        border-radius: 7px;
+        background: #182742;
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-width: 0;
+        padding: 11px;
+        border: 1px solid #435574;
+        border-radius: 8px;
+        background: #101a2d;
+        color: var(--text);
+      }
+
+      input[type="number"] {
+        font-variant-numeric: tabular-nums;
+      }
+
+      .hint {
+        margin-top: 7px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.5;
+      }
+
+      .video-preview,
+      .result-preview {
+        display: none;
+        margin-top: 18px;
+        padding: 14px;
+        border: 1px solid #435574;
+        border-radius: 14px;
+        background: #080f1e75;
+      }
+
+      .video-preview.visible,
+      .result-preview.visible {
+        display: block;
+      }
+
+      .preview-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .preview-heading h2 {
+        margin: 0;
+        font-size: 14px;
+      }
+
+      .time-display {
+        color: #c0b6ff;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .video-preview video {
+        display: block;
+        width: 100%;
+        max-height: 340px;
+        border-radius: 9px;
+        background: #000;
+      }
+
+      .video-info {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 11px;
+        overflow-wrap: anywhere;
+      }
+
+      .seek-controls {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        padding: 0;
+        accent-color: var(--purple);
+        cursor: pointer;
+      }
+
+      .small-button {
+        padding: 9px 12px;
+        border: 1px solid #435574;
+        border-radius: 8px;
+        background: #182742;
+        color: var(--text);
+        cursor: pointer;
+        font-size: 11px;
+      }
+
+      .settings {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-top: 22px;
+      }
+
+      .button {
+        width: 100%;
+        min-height: 49px;
+        margin-top: 25px;
+        padding: 14px 18px;
+        border: 0;
+        border-radius: 11px;
+        background: linear-gradient(100deg, var(--purple), var(--blue));
+        color: white;
+        font-size: 14px;
+        font-weight: 750;
+        cursor: pointer;
+        box-shadow: 0 8px 24px #6757e533;
+      }
+
+      .button:disabled {
+        cursor: not-allowed;
+        opacity: 0.65;
+      }
+
+      .status {
+        display: none;
+        margin-top: 17px;
+        padding: 13px 14px;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        font-size: 12px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+      }
+
+      .status.visible {
+        display: block;
+      }
+
+      .status.error {
+        border-color: #ff718533;
+        background: #ff718511;
+        color: #ff9cab;
+      }
+
+      .status.success {
+        border-color: #37d6a433;
+        background: #37d6a410;
+        color: #67e5ba;
+      }
+
+      .result-preview {
+        border-color: #37d6a433;
+        background: #37d6a408;
+      }
+
+      .result-preview img {
+        display: block;
+        max-width: 100%;
+        max-height: 400px;
+        margin: auto;
+        border-radius: 8px;
+        background: #000;
+      }
+
+      .download-link {
+        display: inline-block;
+        margin-top: 12px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        background: linear-gradient(100deg, var(--purple), var(--blue));
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .features {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 26px;
+        padding-top: 22px;
+        border-top: 1px solid #34435d99;
+      }
+
+      .feature {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.6;
+        text-align: center;
+      }
+
+      .feature strong {
+        display: block;
+        margin-bottom: 4px;
+        color: #e4eaff;
+        font-size: 12px;
+      }
+
+      .footer {
+        margin-top: 23px;
+        color: #7585a3;
+        font-size: 10px;
+        text-align: center;
+      }
+
+      .illustration {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
+      }
+
+      .illustration img {
+        display: block;
+        width: 100%;
+        max-width: 590px;
+        height: auto;
+        object-fit: contain;
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+          max-width: 540px;
+        }
+
+        .illustration img {
+          max-width: 430px;
+        }
+      }
+
+      @media (max-width: 520px) {
+        body {
+          padding: 18px;
+        }
+
+        .page {
+          padding: 28px 0;
+        }
+
+        .card {
+          padding: 25px 20px;
+          border-radius: 17px;
+        }
+
+        .settings {
+          grid-template-columns: 1fr;
+        }
+
+        .features {
+          gap: 6px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        Media Tools
+        <small>Video conversion workspace</small>
+      </div>
+      <a class="home-button" href="/">⌂ Home</a>
+    </header>
+
+    <main class="page">
+      <div class="layout">
+        <section class="card">
+          <div class="icon-box" aria-hidden="true">▶</div>
+          <span class="eyebrow">VIDEO TOOLS</span>
+          <h1>Video to GIF</h1>
+          <p class="description">
+            Preview your video, choose an exact start time, and convert a clip
+            into an animated GIF. Use the timeline or enter the time directly.
+          </p>
+
+          <form id="convertForm">
+            <div class="field">
+              <label for="file">Choose a video</label>
+              <input
+                id="file"
+                name="file"
+                type="file"
+                accept=".mp4,.mov,.avi,.mkv,.webm,.mpeg,.mpg,video/*"
+                required
+              />
+              <div class="hint">
+                MP4, MOV, AVI, MKV or WebM · Maximum 100 MB
+              </div>
+            </div>
+
+            <section id="videoPreviewContainer" class="video-preview">
+              <div class="preview-heading">
+                <h2>Video Preview</h2>
+                <span id="currentTimeDisplay" class="time-display"
+                  >00:00.0</span
+                >
+              </div>
+
+              <video
+                id="videoPreview"
+                controls
+                playsinline
+                preload="metadata"
+              ></video>
+
+              <div class="video-info">
+                <span id="videoFileName"></span>
+                <span id="videoDuration">Loading duration...</span>
+              </div>
+
+              <div class="seek-controls">
+                <input
+                  id="seekSlider"
+                  type="range"
+                  min="0"
+                  max="0"
+                  step="0.1"
+                  value="0"
+                  aria-label="Seek video position"
+                  disabled
+                />
+                <button type="button" id="setStartButton" class="small-button">
+                  Use current time
+                </button>
+              </div>
+
+              <div class="hint">
+                Drag the timeline to move the video cursor. Entering a start
+                time below also moves the video to that position.
+              </div>
+            </section>
+
+            <div class="settings">
+              <div class="field">
+                <label for="start">Start time (seconds)</label>
+                <input
+                  id="start"
+                  name="start"
+                  type="number"
+                  min="0"
+                  max="36000"
+                  step="0.1"
+                  value="0"
+                  required
+                />
+                <div class="hint">The preview seeks to this position.</div>
+              </div>
+
+              <div class="field">
+                <label for="duration">Duration (seconds)</label>
+                <input
+                  id="duration"
+                  name="duration"
+                  type="number"
+                  min="0.1"
+                  max="30"
+                  step="0.1"
+                  value="5"
+                  required
+                />
+                <div class="hint">Maximum 30 seconds</div>
+              </div>
+
+              <div class="field">
+                <label for="fps">Frame rate</label>
+                <select id="fps" name="fps">
+                  <option value="5">5 FPS — smaller GIF</option>
+                  <option value="8">8 FPS</option>
+                  <option value="10" selected>10 FPS — balanced</option>
+                  <option value="12">12 FPS</option>
+                  <option value="15">15 FPS — smoother</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="width">GIF width</label>
+                <select id="width" name="width">
+                  <option value="240">240 px — smallest</option>
+                  <option value="320">320 px</option>
+                  <option value="480" selected>480 px — balanced</option>
+                  <option value="640">640 px — largest</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="button" id="convertButton">
+              Convert to GIF
+            </button>
+
+            <div
+              id="status"
+              class="status"
+              role="status"
+              aria-live="polite"
+            ></div>
+          </form>
+
+          <section id="resultPreview" class="result-preview">
+            <div class="preview-heading">
+              <h2>Generated GIF Preview</h2>
+            </div>
+            <img id="gifPreview" alt="Converted animated GIF" />
+            <a id="downloadLink" class="download-link" download="converted.gif"
+              >Download GIF</a
+            >
+          </section>
+
+          <div class="features">
+            <div class="feature"><strong>100 MB</strong>Maximum upload</div>
+            <div class="feature"><strong>30 seconds</strong>Maximum clip</div>
+            <div class="feature">
+              <strong>Private</strong>Temporary processing
+            </div>
+          </div>
+
+          <footer class="footer">Media Tools · Video to GIF</footer>
+        </section>
+
+        <aside class="illustration">
+          <img
+            src="/video-to-gif/static/images/video-to-gif.png"
+            alt="Video clips converted into animated GIFs"
+            onerror="this.style.display = 'none'"
+          />
+        </aside>
+      </div>
+    </main>
+
+    <script>
+      const form = document.getElementById("convertForm");
+      const fileInput = document.getElementById("file");
+      const button = document.getElementById("convertButton");
+      const statusBox = document.getElementById("status");
+
+      const videoPreviewContainer = document.getElementById(
+        "videoPreviewContainer",
+      );
+      const videoPreview = document.getElementById("videoPreview");
+      const videoFileName = document.getElementById("videoFileName");
+      const videoDuration = document.getElementById("videoDuration");
+      const currentTimeDisplay = document.getElementById("currentTimeDisplay");
+      const seekSlider = document.getElementById("seekSlider");
+      const startInput = document.getElementById("start");
+      const durationInput = document.getElementById("duration");
+      const setStartButton = document.getElementById("setStartButton");
+
+      const resultPreview = document.getElementById("resultPreview");
+      const gifPreview = document.getElementById("gifPreview");
+      const downloadLink = document.getElementById("downloadLink");
+
+      let videoObjectUrl = null;
+      let gifObjectUrl = null;
+      let seekUpdatePending = false;
+
+      function showStatus(message, type) {
+        statusBox.textContent = message;
+        statusBox.className = `status visible ${type}`;
+      }
+
+      function formatTime(seconds) {
+        if (!Number.isFinite(seconds) || seconds < 0) {
+          return "00:00.0";
+        }
+
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds - minutes * 60;
+
+        return (
+          String(minutes).padStart(2, "0") +
+          ":" +
+          remainingSeconds.toFixed(1).padStart(4, "0")
+        );
+      }
+
+      function clearGifPreview() {
+        resultPreview.classList.remove("visible");
+        gifPreview.removeAttribute("src");
+        downloadLink.removeAttribute("href");
+
+        if (gifObjectUrl) {
+          URL.revokeObjectURL(gifObjectUrl);
+          gifObjectUrl = null;
+        }
+      }
+
+      function seekVideo(seconds) {
+        if (!Number.isFinite(videoPreview.duration)) return;
+
+        const maximum = Math.max(0, videoPreview.duration);
+        const target = Math.min(Math.max(0, seconds), maximum);
+
+        seekSlider.value = String(target);
+        currentTimeDisplay.textContent = formatTime(target);
+
+        if (Math.abs(videoPreview.currentTime - target) > 0.05) {
+          try {
+            videoPreview.currentTime = target;
+          } catch (_) {
+            // Metadata may not be ready yet.
+          }
+        }
+      }
+
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+
+        clearGifPreview();
+        statusBox.className = "status";
+
+        if (videoObjectUrl) {
+          URL.revokeObjectURL(videoObjectUrl);
+          videoObjectUrl = null;
+        }
+
+        videoPreview.pause();
+        videoPreview.removeAttribute("src");
+        videoPreview.load();
+
+        videoPreviewContainer.classList.remove("visible");
+        videoFileName.textContent = "";
+        videoDuration.textContent = "";
+        currentTimeDisplay.textContent = "00:00.0";
+        seekSlider.value = "0";
+        seekSlider.max = "0";
+        seekSlider.disabled = true;
+
+        if (!file) return;
+
+        if (file.size > 100 * 1024 * 1024) {
+          showStatus("The selected video exceeds 100 MB.", "error");
+          fileInput.value = "";
+          return;
+        }
+
+        if (
+          !file.type.startsWith("video/") &&
+          !/\.(mp4|mov|avi|mkv|webm|mpeg|mpg)$/i.test(file.name)
+        ) {
+          showStatus("Please select a supported video file.", "error");
+          fileInput.value = "";
+          return;
+        }
+
+        videoObjectUrl = URL.createObjectURL(file);
+        videoPreview.src = videoObjectUrl;
+        videoFileName.textContent = file.name;
+        videoPreviewContainer.classList.add("visible");
+        videoPreview.load();
+      });
+
+      videoPreview.addEventListener("loadedmetadata", () => {
+        const length = videoPreview.duration;
+
+        if (!Number.isFinite(length) || length <= 0) {
+          videoDuration.textContent = "Duration unavailable";
+          return;
+        }
+
+        videoDuration.textContent = `Duration: ${length.toFixed(1)} seconds`;
+        seekSlider.max = String(length);
+        seekSlider.disabled = false;
+        startInput.max = String(length);
+
+        if (Number(startInput.value) > length) {
+          startInput.value = "0";
+        }
+
+        seekVideo(Number(startInput.value) || 0);
+      });
+
+      videoPreview.addEventListener("timeupdate", () => {
+        const current = videoPreview.currentTime;
+
+        currentTimeDisplay.textContent = formatTime(current);
+
+        if (!seekUpdatePending) {
+          seekSlider.value = String(current);
+        }
+      });
+
+      videoPreview.addEventListener("error", () => {
+        if (videoPreviewContainer.classList.contains("visible")) {
+          showStatus(
+            "This video codec cannot be previewed by your browser. You can still try conversion; the preview may not be available for this format.",
+            "error",
+          );
+        }
+      });
+
+      seekSlider.addEventListener("input", () => {
+        seekUpdatePending = true;
+        seekVideo(Number(seekSlider.value));
+      });
+
+      seekSlider.addEventListener("change", () => {
+        seekUpdatePending = false;
+        seekVideo(Number(seekSlider.value));
+      });
+
+      startInput.addEventListener("input", () => {
+        if (startInput.value === "") return;
+
+        const value = Number(startInput.value);
+        if (!Number.isFinite(value) || value < 0) return;
+
+        seekVideo(value);
+      });
+
+      startInput.addEventListener("change", () => {
+        if (startInput.value === "") {
+          startInput.value = "0";
+        }
+
+        const value = Number(startInput.value);
+        const max = Number.isFinite(videoPreview.duration)
+          ? videoPreview.duration
+          : 36000;
+
+        const clamped = Math.min(Math.max(0, value || 0), max);
+        startInput.value = String(clamped);
+        seekVideo(clamped);
+      });
+
+      setStartButton.addEventListener("click", () => {
+        if (!Number.isFinite(videoPreview.duration)) return;
+
+        startInput.value = videoPreview.currentTime.toFixed(1);
+        seekVideo(videoPreview.currentTime);
+      });
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const file = fileInput.files[0];
+
+        if (!file) {
+          showStatus("Please select a video file.", "error");
+          return;
+        }
+
+        if (file.size > 100 * 1024 * 1024) {
+          showStatus("The selected video exceeds 100 MB.", "error");
+          return;
+        }
+
+        const start = Number(startInput.value);
+        const duration = Number(durationInput.value);
+        const knownVideoDuration = videoPreview.duration;
+
+        if (!Number.isFinite(start) || start < 0) {
+          showStatus("Start time must be zero or greater.", "error");
+          return;
+        }
+
+        if (!Number.isFinite(duration) || duration < 0.1 || duration > 30) {
+          showStatus("Duration must be between 0.1 and 30 seconds.", "error");
+          return;
+        }
+
+        if (
+          Number.isFinite(knownVideoDuration) &&
+          start >= knownVideoDuration
+        ) {
+          showStatus(
+            "Start time must be earlier than the video duration.",
+            "error",
+          );
+          return;
+        }
+
+        if (
+          Number.isFinite(knownVideoDuration) &&
+          start + duration > knownVideoDuration
+        ) {
+          showStatus(
+            "Start time plus duration exceeds the video length. Reduce the duration or start time.",
+            "error",
+          );
+          return;
+        }
+
+        const data = new FormData(form);
+
+        button.disabled = true;
+        button.textContent = "Converting...";
+        clearGifPreview();
+        showStatus("Converting your video. Please wait.", "success");
+
+        try {
+          const response = await fetch("/video-to-gif/convert", {
+            method: "POST",
+            body: data,
+            credentials: "same-origin",
+          });
+
+          if (!response.ok) {
+            let message = `Conversion failed (HTTP ${response.status}).`;
+
+            try {
+              const contentType = response.headers.get("content-type") || "";
+
+              if (contentType.includes("application/json")) {
+                const result = await response.json();
+                if (result.error) message = result.error;
+              } else {
+                const details = await response.text();
+                if (details) message = details.slice(0, 500);
+              }
+            } catch (_) {}
+
+            throw new Error(message);
+          }
+
+          const blob = await response.blob();
+
+          if (!blob.size) {
+            throw new Error("The generated GIF is empty.");
+          }
+
+          if (gifObjectUrl) {
+            URL.revokeObjectURL(gifObjectUrl);
+          }
+
+          gifObjectUrl = URL.createObjectURL(blob);
+          gifPreview.src = gifObjectUrl;
+
+          const outputName = file.name.replace(/\.[^.]+$/, "") + ".gif";
+
+          downloadLink.href = gifObjectUrl;
+          downloadLink.download = outputName;
+
+          resultPreview.classList.add("visible");
+
+          // Start the browser download without saving the output on the server.
+          const temporaryLink = document.createElement("a");
+          temporaryLink.href = gifObjectUrl;
+          temporaryLink.download = outputName;
+          temporaryLink.style.display = "none";
+          document.body.appendChild(temporaryLink);
+          temporaryLink.click();
+          temporaryLink.remove();
+
+          showStatus(
+            "GIF created. The preview is below and the browser download has started.",
+            "success",
+          );
+
+          resultPreview.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+          });
+        } catch (error) {
+          showStatus(
+            error.message || "Conversion failed. Please try again.",
+            "error",
+          );
+        } finally {
+          button.disabled = false;
+          button.textContent = "Convert to GIF";
+        }
+      });
+
+      window.addEventListener("beforeunload", () => {
+        if (videoObjectUrl) URL.revokeObjectURL(videoObjectUrl);
+        if (gifObjectUrl) URL.revokeObjectURL(gifObjectUrl);
+      });
+    </script>
+  </body>
+</html>

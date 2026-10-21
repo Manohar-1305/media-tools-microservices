@@ -1,0 +1,7 @@
+cd ~/website/without-db/audio-cutter
+docker build -t audio-cutter:latest .
+docker rm -f audio-cutter 2>/dev/null || true
+docker run -d --name audio-cutter --network media-tools-network --restart unless-stopped -p 5001:5001 audio-cutter:latest
+
+curl.exe http://127.0.0.1:5000/audio-cutter/health
+curl.exe http://127.0.0.1:5000/audio-cutter/health

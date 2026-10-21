@@ -1,0 +1,1111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Video Subtitle Studio | Media Tools</title>
+    <style>
+      :root {
+        --bg: #080d19;
+        --panel: #101a2d;
+        --border: #263651;
+        --text: #f4f7ff;
+        --muted: #91a2c2;
+        --purple: #7964f4;
+        --green: #37d6a4;
+        --red: #ff7185;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(ellipse at top, #17213b 0%, transparent 55%),
+          var(--bg);
+        color: var(--text);
+        font-family: "Segoe UI", Arial, sans-serif;
+      }
+
+      .container {
+        width: min(1200px, calc(100% - 28px));
+        margin: auto;
+        padding: 25px 0 45px;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 30px;
+      }
+
+      .brand {
+        font-size: 19px;
+        font-weight: 750;
+      }
+
+      .brand small {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 400;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(27px, 5vw, 38px);
+      }
+      h2 {
+        margin: 0;
+        font-size: 16px;
+      }
+
+      .subtitle {
+        margin: 10px 0 22px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      button,
+      .button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      button,
+      .button {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 38px;
+        padding: 9px 13px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #131f34;
+        color: var(--text);
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 650;
+        cursor: pointer;
+      }
+
+      .primary {
+        border-color: transparent;
+        background: linear-gradient(100deg, #8d7aff, #7058ed);
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: wait;
+      }
+
+      .notice {
+        margin: 18px 0;
+        padding: 13px 15px;
+        border: 1px solid #7964f455;
+        border-radius: 10px;
+        background: #7964f414;
+        color: #c8c0ff;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+        gap: 18px;
+        align-items: start;
+      }
+
+      .panel {
+        min-width: 0;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 15px;
+        background: linear-gradient(150deg, #121e33, #0e1728);
+      }
+
+      .panel-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 18px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .panel-body {
+        padding: 18px;
+      }
+
+      .field {
+        display: grid;
+        gap: 7px;
+        margin-bottom: 14px;
+      }
+
+      label {
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      input[type="file"],
+      input[type="text"],
+      input[type="number"],
+      select,
+      textarea {
+        width: 100%;
+        min-width: 0;
+        padding: 10px 11px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        outline: none;
+        background: #080f1e;
+        color: var(--text);
+        font-size: 12px;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--purple);
+      }
+
+      video {
+        display: block;
+        width: 100%;
+        max-height: 480px;
+        background: #000;
+      }
+
+      .video-wrap {
+        position: relative;
+        background: #000;
+      }
+
+      .subtitle-overlay {
+        position: absolute;
+        right: 5%;
+        bottom: 10%;
+        left: 5%;
+        display: none;
+        padding: 7px 12px;
+        color: white;
+        font-size: clamp(15px, 2.2vw, 25px);
+        font-weight: 700;
+        text-align: center;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        text-shadow:
+          -2px -2px 2px #000,
+          2px -2px 2px #000,
+          -2px 2px 2px #000,
+          2px 2px 2px #000,
+          0 3px 6px #000;
+        pointer-events: none;
+      }
+
+      .time-now {
+        margin: 10px 0 14px;
+        color: var(--green);
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .toolbar,
+      .bottom-actions,
+      .live-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .live-editor {
+        display: grid;
+        gap: 10px;
+        margin-top: 18px;
+        padding: 14px;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        background: #0a1323;
+      }
+
+      .live-editor textarea {
+        min-height: 95px;
+        resize: vertical;
+        line-height: 1.5;
+        font-size: 14px;
+      }
+
+      .help {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.6;
+      }
+
+      .cue-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .cue {
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #0a1323;
+      }
+
+      .cue.active {
+        border-color: var(--purple);
+      }
+
+      .cue-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .cue-title {
+        color: #b8acff;
+        font-size: 11px;
+        font-weight: 750;
+      }
+
+      .cue-times {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .cue-times .field {
+        min-width: 0;
+        margin-bottom: 8px;
+      }
+
+      .cue-times input {
+        padding: 9px 8px;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .cue textarea {
+        min-height: 65px;
+        margin-top: 2px;
+        resize: vertical;
+        line-height: 1.5;
+      }
+
+      .small-button {
+        min-height: 29px;
+        padding: 5px 9px;
+        font-size: 10px;
+      }
+
+      .empty {
+        padding: 24px 12px;
+        color: var(--muted);
+        font-size: 12px;
+        text-align: center;
+        line-height: 1.7;
+      }
+
+      .status-message {
+        display: none;
+        margin-top: 15px;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .status-message.info {
+        display: block;
+        border: 1px solid #7964f455;
+        background: #7964f414;
+        color: #c8c0ff;
+      }
+
+      .status-message.error {
+        display: block;
+        border: 1px solid #ff718555;
+        background: #ff718511;
+        color: var(--red);
+      }
+
+      .status-message.success {
+        display: block;
+        border: 1px solid #37d6a455;
+        background: #37d6a411;
+        color: var(--green);
+      }
+
+      .footer {
+        margin-top: 25px;
+        color: #647592;
+        font-size: 10px;
+        text-align: center;
+      }
+
+      @media (max-width: 850px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          width: calc(100% - 18px);
+          padding-top: 16px;
+        }
+        .panel-head,
+        .panel-body {
+          padding: 13px;
+        }
+        .topbar {
+          margin-bottom: 23px;
+        }
+        .cue-times {
+          grid-template-columns: 1fr 1fr;
+          gap: 6px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <header class="topbar">
+        <div class="brand">Media Tools<small>Video Subtitle Studio</small></div>
+        <a class="button" href="/">⌂ Home</a>
+      </header>
+
+      <h1>Add subtitles to your video</h1>
+      <p class="subtitle">
+        Play the video, type subtitles, and set the start and end time for each
+        subtitle.
+      </p>
+
+      <div class="notice">
+        Video limit: 100 MB. Import SRT or TXT files. Enter every start and end
+        time as minutes:seconds (MM:SS), for example 01:25.
+      </div>
+
+      <div class="layout">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Video preview</h2>
+            <span id="video-size-label" class="help">No video selected</span>
+          </div>
+
+          <div class="panel-body">
+            <div class="field">
+              <label for="video-file">Choose video</label>
+              <input
+                id="video-file"
+                type="file"
+                accept="video/*,.mp4,.mov,.mkv,.avi,.webm"
+              />
+            </div>
+
+            <div class="video-wrap">
+              <video id="video" controls playsinline></video>
+              <div id="subtitle-overlay" class="subtitle-overlay"></div>
+            </div>
+
+            <div class="time-now">
+              Current time: <span id="current-time">00:00</span>
+            </div>
+
+            <div class="live-editor">
+              <label for="live-subtitle"
+                >Type subtitle while the video plays</label
+              >
+              <textarea
+                id="live-subtitle"
+                placeholder="Type subtitle text here..."
+              ></textarea>
+              <div class="live-actions">
+                <button id="add-subtitle" type="button" class="primary">
+                  Add Subtitle at Current Time
+                </button>
+                <button id="pause-video" type="button">Pause</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Saved subtitles</h2>
+            <span id="cue-count" class="help">0 subtitles</span>
+          </div>
+
+          <div class="panel-body">
+            <div class="field">
+              <label for="subtitle-file">Import SRT or TXT</label>
+              <input
+                id="subtitle-file"
+                type="file"
+                accept=".srt,.txt,text/plain,application/x-subrip"
+              />
+            </div>
+
+            <div class="toolbar">
+              <button id="sort-cues" type="button">Sort by time</button>
+              <button id="clear-cues" type="button">Clear all</button>
+            </div>
+
+            <div id="cue-list" class="cue-list">
+              <div class="empty">No subtitles added yet.</div>
+            </div>
+
+            <div class="field" style="margin-top: 18px">
+              <label for="output-format">Output format</label>
+              <select id="output-format">
+                <option value="mp4">MP4</option>
+                <option value="mkv">MKV</option>
+              </select>
+            </div>
+
+            <div class="bottom-actions">
+              <button id="download-srt" type="button">Download SRT</button>
+              <button id="export-video" class="primary" type="button">
+                Export Subtitled Video
+              </button>
+            </div>
+
+            <div
+              id="status-message"
+              class="status-message"
+              role="status"
+              aria-live="polite"
+            ></div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="footer">Media Tools · Video Subtitle Studio</footer>
+    </main>
+
+    <script>
+      const MAX_VIDEO_SIZE = 100 * 1024 * 1024;
+      const MAX_SUBTITLE_SIZE = 5 * 1024 * 1024;
+      const DEFAULT_DURATION = 3;
+
+      const videoInput = document.getElementById("video-file");
+      const subtitleInput = document.getElementById("subtitle-file");
+      const video = document.getElementById("video");
+      const liveSubtitle = document.getElementById("live-subtitle");
+      const subtitleOverlay = document.getElementById("subtitle-overlay");
+      const cueList = document.getElementById("cue-list");
+      const cueCount = document.getElementById("cue-count");
+      const currentTimeLabel = document.getElementById("current-time");
+      const statusMessage = document.getElementById("status-message");
+      const exportButton = document.getElementById("export-video");
+      const downloadSrtButton = document.getElementById("download-srt");
+      const addSubtitleButton = document.getElementById("add-subtitle");
+
+      let videoObjectUrl = null;
+      let cues = [];
+      let nextCueId = 1;
+
+      function showMessage(message, type = "info") {
+        statusMessage.textContent = message;
+        statusMessage.className = "status-message " + type;
+      }
+
+      function clearMessage() {
+        statusMessage.textContent = "";
+        statusMessage.className = "status-message";
+      }
+
+      function formatMMSS(seconds) {
+        const totalSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
+        return (
+          String(Math.floor(totalSeconds / 60)).padStart(2, "0") +
+          ":" +
+          String(totalSeconds % 60).padStart(2, "0")
+        );
+      }
+
+      function parseMMSS(value) {
+        const match = String(value)
+          .trim()
+          .match(/^(\d+):([0-5]\d)$/);
+        if (!match) {
+          throw new Error(
+            "Enter minutes and seconds as MM:SS, for example 01:25.",
+          );
+        }
+        return Number(match[1]) * 60 + Number(match[2]);
+      }
+
+      function formatSrtTimestamp(seconds) {
+        const totalMs = Math.max(0, Math.round(seconds * 1000));
+        const hours = Math.floor(totalMs / 3600000);
+        const minutes = Math.floor((totalMs % 3600000) / 60000);
+        const secs = Math.floor((totalMs % 60000) / 1000);
+        const ms = totalMs % 1000;
+
+        return (
+          String(hours).padStart(2, "0") +
+          ":" +
+          String(minutes).padStart(2, "0") +
+          ":" +
+          String(secs).padStart(2, "0") +
+          "," +
+          String(ms).padStart(3, "0")
+        );
+      }
+
+      function parseSrtTimestamp(value) {
+        const match = String(value)
+          .trim()
+          .match(/^(\d+):([0-5]\d):([0-5]\d)[,.](\d{1,3})$/);
+        if (!match) throw new Error("Invalid SRT timestamp: " + value);
+
+        return (
+          Number(match[1]) * 3600 +
+          Number(match[2]) * 60 +
+          Number(match[3]) +
+          Number(match[4].padEnd(3, "0")) / 1000
+        );
+      }
+
+      function renderCues() {
+        cueList.replaceChildren();
+
+        if (!cues.length) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "No subtitles added yet.";
+          cueList.appendChild(empty);
+        }
+
+        cues.forEach((cue, index) => {
+          const card = document.createElement("article");
+          card.className = "cue";
+          card.dataset.id = String(cue.id);
+
+          const top = document.createElement("div");
+          top.className = "cue-top";
+
+          const title = document.createElement("span");
+          title.className = "cue-title";
+          title.textContent = "Subtitle " + (index + 1);
+
+          const actions = document.createElement("div");
+          actions.style.display = "flex";
+          actions.style.gap = "6px";
+
+          const preview = document.createElement("button");
+          preview.type = "button";
+          preview.className = "small-button";
+          preview.textContent = "Preview";
+          preview.addEventListener("click", () => {
+            video.currentTime = cue.start;
+            video.pause();
+            updateSubtitleOverlay();
+          });
+
+          const deleteButton = document.createElement("button");
+          deleteButton.type = "button";
+          deleteButton.className = "small-button";
+          deleteButton.textContent = "Delete";
+          deleteButton.addEventListener("click", () => {
+            cues = cues.filter((item) => item.id !== cue.id);
+            if (liveSubtitle.dataset.editingId === String(cue.id))
+              resetEditor();
+            renderCues();
+          });
+
+          actions.append(preview, deleteButton);
+          top.append(title, actions);
+
+          const times = document.createElement("div");
+          times.className = "cue-times";
+
+          const startField = document.createElement("div");
+          startField.className = "field";
+          const startLabel = document.createElement("label");
+          startLabel.textContent = "Start (MM:SS)";
+
+          const startInput = document.createElement("input");
+          startInput.type = "text";
+          startInput.value = formatMMSS(cue.start);
+          startInput.placeholder = "00:00";
+          startInput.autocomplete = "off";
+          startInput.inputMode = "numeric";
+          startInput.setAttribute(
+            "aria-label",
+            "Start time in minutes and seconds",
+          );
+
+          startInput.addEventListener("change", () => {
+            try {
+              const value = parseMMSS(startInput.value);
+              if (value >= cue.end)
+                throw new Error("Start must be before end.");
+              cue.start = value;
+              renderCues();
+            } catch (error) {
+              startInput.value = formatMMSS(cue.start);
+              showMessage(error.message, "error");
+            }
+          });
+
+          startField.append(startLabel, startInput);
+
+          const endField = document.createElement("div");
+          endField.className = "field";
+          const endLabel = document.createElement("label");
+          endLabel.textContent = "End (MM:SS)";
+
+          const endInput = document.createElement("input");
+          endInput.type = "text";
+          endInput.value = formatMMSS(cue.end);
+          endInput.placeholder = "00:03";
+          endInput.autocomplete = "off";
+          endInput.inputMode = "numeric";
+          endInput.setAttribute(
+            "aria-label",
+            "End time in minutes and seconds",
+          );
+
+          endInput.addEventListener("change", () => {
+            try {
+              const value = parseMMSS(endInput.value);
+              if (value <= cue.start)
+                throw new Error("End must be after start.");
+              cue.end = value;
+              endInput.value = formatMMSS(cue.end);
+              updateSubtitleOverlay();
+            } catch (error) {
+              endInput.value = formatMMSS(cue.end);
+              showMessage(error.message, "error");
+            }
+          });
+
+          endField.append(endLabel, endInput);
+          times.append(startField, endField);
+
+          const textArea = document.createElement("textarea");
+          textArea.value = cue.text;
+          textArea.placeholder = "Type subtitle text here...";
+          textArea.setAttribute("aria-label", "Subtitle text");
+          textArea.addEventListener("input", () => {
+            cue.text = textArea.value;
+            updateSubtitleOverlay();
+          });
+
+          const editButton = document.createElement("button");
+          editButton.type = "button";
+          editButton.className = "small-button";
+          editButton.style.marginTop = "8px";
+          editButton.textContent = "Edit in live editor";
+          editButton.addEventListener("click", () => {
+            video.currentTime = cue.start;
+            liveSubtitle.value = cue.text;
+            liveSubtitle.dataset.editingId = String(cue.id);
+            addSubtitleButton.textContent = "Save Subtitle Changes";
+            liveSubtitle.focus();
+            showMessage("Editing subtitle " + (index + 1) + ".", "info");
+          });
+
+          card.append(top, times, textArea, editButton);
+          cueList.appendChild(card);
+        });
+
+        cueCount.textContent =
+          cues.length + (cues.length === 1 ? " subtitle" : " subtitles");
+        updateSubtitleOverlay();
+      }
+
+      function resetEditor() {
+        delete liveSubtitle.dataset.editingId;
+        liveSubtitle.value = "";
+        addSubtitleButton.textContent = "Add Subtitle at Current Time";
+      }
+
+      function addOrSaveSubtitle() {
+        if (!video.src) {
+          showMessage("Choose a video first.", "error");
+          return;
+        }
+
+        const text = liveSubtitle.value.trim();
+        if (!text) {
+          showMessage("Type the subtitle text first.", "error");
+          liveSubtitle.focus();
+          return;
+        }
+
+        const start = Math.max(0, video.currentTime || 0);
+        const duration =
+          Number.isFinite(video.duration) && video.duration > start
+            ? Math.min(DEFAULT_DURATION, video.duration - start)
+            : DEFAULT_DURATION;
+        const end = start + Math.max(duration, 0.1);
+        const editingId = liveSubtitle.dataset.editingId;
+
+        if (editingId) {
+          const cue = cues.find((item) => String(item.id) === editingId);
+          if (cue) {
+            cue.start = start;
+            cue.end = end;
+            cue.text = text;
+          }
+          resetEditor();
+          showMessage(
+            "Subtitle updated at " + formatMMSS(start) + ".",
+            "success",
+          );
+        } else {
+          cues.push({ id: nextCueId++, start, end, text });
+          liveSubtitle.value = "";
+          liveSubtitle.focus();
+          showMessage(
+            "Subtitle added at " + formatMMSS(start) + ".",
+            "success",
+          );
+        }
+
+        renderCues();
+      }
+
+      function updateSubtitleOverlay() {
+        const now = video.currentTime || 0;
+        currentTimeLabel.textContent = formatMMSS(now);
+
+        const active = cues.find(
+          (cue) => now >= cue.start && now < cue.end && cue.text.trim(),
+        );
+
+        subtitleOverlay.textContent = active ? active.text : "";
+        subtitleOverlay.style.display = active ? "block" : "none";
+
+        document.querySelectorAll(".cue").forEach((card) => {
+          const cue = cues.find((item) => String(item.id) === card.dataset.id);
+          card.classList.toggle(
+            "active",
+            Boolean(cue && now >= cue.start && now < cue.end),
+          );
+        });
+      }
+
+      function makeSrt() {
+        if (!cues.length)
+          throw new Error("Add or import at least one subtitle.");
+
+        const ordered = [...cues].sort((a, b) => a.start - b.start);
+
+        return ordered
+          .map((cue, index) => {
+            if (
+              !Number.isFinite(cue.start) ||
+              !Number.isFinite(cue.end) ||
+              cue.end <= cue.start
+            ) {
+              throw new Error(
+                "Subtitle " + (index + 1) + " has an invalid time range.",
+              );
+            }
+            if (!cue.text.trim()) {
+              throw new Error("Subtitle " + (index + 1) + " has no text.");
+            }
+
+            return (
+              index +
+              1 +
+              "\n" +
+              formatSrtTimestamp(cue.start) +
+              " --> " +
+              formatSrtTimestamp(cue.end) +
+              "\n" +
+              cue.text.trim().replace(/\r/g, "") +
+              "\n"
+            );
+          })
+          .join("\n");
+      }
+
+      function parseSrt(content) {
+        const normalized = content
+          .replace(/^\uFEFF/, "")
+          .replace(/\r/g, "")
+          .trim();
+        if (!normalized) throw new Error("The SRT file is empty.");
+
+        const blocks = normalized.split(/\n\s*\n+/);
+        const parsed = [];
+
+        for (const block of blocks) {
+          const lines = block.split("\n");
+          const timestampIndex = /^\s*\d+\s*$/.test(lines[0]) ? 1 : 0;
+          const match = (lines[timestampIndex] || "").match(
+            /^\s*(\d+:\d{2}:\d{2}[,.]\d{1,3})\s*-->\s*(\d+:\d{2}:\d{2}[,.]\d{1,3})/,
+          );
+
+          if (!match) throw new Error("Unable to parse SRT timestamp.");
+
+          const start = parseSrtTimestamp(match[1]);
+          const end = parseSrtTimestamp(match[2]);
+          const text = lines
+            .slice(timestampIndex + 1)
+            .join("\n")
+            .trim();
+
+          if (end <= start || !text)
+            throw new Error("Invalid SRT subtitle block.");
+
+          parsed.push({ id: nextCueId++, start, end, text });
+        }
+
+        if (!parsed.length) throw new Error("No subtitles found.");
+        return parsed;
+      }
+
+      function parseTxt(content) {
+        const lines = content
+          .replace(/^\uFEFF/, "")
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean);
+
+        if (!lines.length) throw new Error("The TXT file contains no text.");
+
+        return lines.map((text, index) => ({
+          id: nextCueId++,
+          start: index * DEFAULT_DURATION,
+          end: (index + 1) * DEFAULT_DURATION,
+          text,
+        }));
+      }
+
+      videoInput.addEventListener("change", () => {
+        clearMessage();
+        const file = videoInput.files[0];
+        if (!file) return;
+
+        if (file.size > MAX_VIDEO_SIZE) {
+          videoInput.value = "";
+          showMessage("Video cannot exceed 100 MB.", "error");
+          return;
+        }
+
+        if (videoObjectUrl) URL.revokeObjectURL(videoObjectUrl);
+
+        videoObjectUrl = URL.createObjectURL(file);
+        video.src = videoObjectUrl;
+        video.load();
+
+        document.getElementById("video-size-label").textContent =
+          (file.size / (1024 * 1024)).toFixed(1) + " MB";
+
+        showMessage("Video loaded.", "success");
+      });
+
+      subtitleInput.addEventListener("change", async () => {
+        const file = subtitleInput.files[0];
+        if (!file) return;
+
+        if (file.size > MAX_SUBTITLE_SIZE) {
+          subtitleInput.value = "";
+          showMessage("Subtitle file cannot exceed 5 MB.", "error");
+          return;
+        }
+
+        const extension = file.name.split(".").pop().toLowerCase();
+
+        try {
+          const content = await file.text();
+          const imported =
+            extension === "srt"
+              ? parseSrt(content)
+              : extension === "txt"
+                ? parseTxt(content)
+                : null;
+
+          if (!imported) throw new Error("Choose an SRT or TXT file.");
+
+          cues = imported;
+          resetEditor();
+          renderCues();
+          showMessage("Imported " + cues.length + " subtitles.", "success");
+        } catch (error) {
+          showMessage(
+            error.message || "Unable to import subtitle file.",
+            "error",
+          );
+        } finally {
+          subtitleInput.value = "";
+        }
+      });
+
+      addSubtitleButton.addEventListener("click", addOrSaveSubtitle);
+      document
+        .getElementById("pause-video")
+        .addEventListener("click", () => video.pause());
+
+      document.getElementById("sort-cues").addEventListener("click", () => {
+        cues.sort((a, b) => a.start - b.start);
+        renderCues();
+        showMessage("Subtitles sorted by time.", "success");
+      });
+
+      document.getElementById("clear-cues").addEventListener("click", () => {
+        if (!confirm("Delete all subtitles?")) return;
+        cues = [];
+        resetEditor();
+        renderCues();
+        clearMessage();
+      });
+
+      downloadSrtButton.addEventListener("click", () => {
+        try {
+          const blob = new Blob([makeSrt()], {
+            type: "text/plain;charset=utf-8",
+          });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "subtitles.srt";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          showMessage("SRT downloaded.", "success");
+        } catch (error) {
+          showMessage(error.message, "error");
+        }
+      });
+
+      exportButton.addEventListener("click", async () => {
+        const file = videoInput.files[0];
+
+        if (!file) {
+          showMessage("Choose a video first.", "error");
+          return;
+        }
+
+        let srt;
+        try {
+          srt = makeSrt();
+        } catch (error) {
+          showMessage(error.message, "error");
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("video", file, file.name);
+        formData.append(
+          "subtitle",
+          new Blob([srt], { type: "application/x-subrip;charset=utf-8" }),
+          "subtitles.srt",
+        );
+        formData.append(
+          "output_format",
+          document.getElementById("output-format").value,
+        );
+
+        exportButton.disabled = true;
+        downloadSrtButton.disabled = true;
+        exportButton.textContent = "Processing...";
+        showMessage("Uploading video and converting subtitles...", "info");
+
+        try {
+          /*
+           * Use the current page origin and the gateway's subtitle route.
+           * Do not set Content-Type manually; fetch adds the multipart boundary.
+           */
+          const exportUrl = new URL(
+            "/video-subtitle/convert",
+            window.location.origin,
+          );
+
+          const response = await fetch(exportUrl.toString(), {
+            method: "POST",
+            body: formData,
+            credentials: "same-origin",
+          });
+
+          if (!response.ok) {
+            const contentType = response.headers.get("content-type") || "";
+            let message = "Video export failed (HTTP " + response.status + ").";
+
+            if (contentType.includes("application/json")) {
+              const data = await response.json();
+              if (data && data.error) message = data.error;
+            } else {
+              const body = await response.text();
+              if (body.trim()) message += "\n" + body.trim().slice(0, 1500);
+            }
+
+            throw new Error(message);
+          }
+
+          const contentType = response.headers.get("content-type") || "";
+          if (
+            contentType.includes("application/json") ||
+            contentType.includes("text/html")
+          ) {
+            const body = await response.text();
+            throw new Error(
+              "The server returned a response instead of a video file. " +
+                body.slice(0, 1000),
+            );
+          }
+
+          const blob = await response.blob();
+          if (!blob.size)
+            throw new Error("The server returned an empty video file.");
+
+          const url = URL.createObjectURL(blob);
+          const format = document.getElementById("output-format").value;
+          const name =
+            file.name.replace(/\.[^.]+$/, "") + "-subtitled." + format;
+
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = name;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 60000);
+          showMessage("Video exported successfully.", "success");
+        } catch (error) {
+          console.error("Video subtitle export failed:", error);
+          showMessage(error.message || "Unable to export video.", "error");
+        } finally {
+          exportButton.disabled = false;
+          downloadSrtButton.disabled = false;
+          exportButton.textContent = "Export Subtitled Video";
+        }
+      });
+
+      video.addEventListener("timeupdate", updateSubtitleOverlay);
+      video.addEventListener("seeked", updateSubtitleOverlay);
+      video.addEventListener("loadedmetadata", updateSubtitleOverlay);
+      video.addEventListener("pause", updateSubtitleOverlay);
+
+      window.addEventListener("beforeunload", () => {
+        if (videoObjectUrl) URL.revokeObjectURL(videoObjectUrl);
+      });
+    </script>
+  </body>
+</html>

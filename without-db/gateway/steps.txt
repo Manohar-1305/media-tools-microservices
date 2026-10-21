@@ -1,0 +1,44 @@
+
+docker network create media-tools-network 2>/dev/null || true
+
+docker volume create media-tools-mysql-data
+
+docker run -d \
+  --name media-tools-mysql \
+  --network media-tools-network \
+  --restart unless-stopped \
+  -e MYSQL_ROOT_PASSWORD='ChangeThisRootPassword123!' \
+  -e MYSQL_DATABASE='media_tools' \
+  -e MYSQL_USER='media_user' \
+  -e MYSQL_PASSWORD='ChangeThisAppPassword123!' \
+  -v media-tools-mysql-data:/var/lib/mysql \
+  mysql:8.4
+
+docker ps
+
+cd ~/website/without-db/gateway
+sed -i 's|AUDIO_CUTTER_URL=.*|AUDIO_CUTTER_URL=http://audio-cutter:5001|; s|AUDIO_JOINER_URL=.*|AUDIO_JOINER_URL=http://audio-joiner:5002|; s|VIDEO_CUTTER_URL=.*|VIDEO_CUTTER_URL=http://video-cutter:5003|; s|AUDIO_TO_VIDEO_URL=.*|AUDIO_TO_VIDEO_URL=http://audio-to-video:5007|' .env
+docker build -t media-tools-gateway:latest .
+docker rm -f media-tools-gateway 2>/dev/null || true
+docker run -d --name media-tools-gateway --network media-tools-network --restart unless-stopped -p 5000:5000 --env-file .env media-tools-gateway:latest
+
+docker ps
+
+============
+docker network create media-tools-network 2>/dev/null || true
+
+cd ~/website/without-db/audio-cutter && docker build -t audio-cutter:latest . && docker run -d --name audio-cutter --network media-tools-network --restart unless-stopped -p 5001:5001 audio-cutter:latest
+
+cd ~/website/without-db/audio-joiner && docker build -t audio-joiner:latest . && docker run -d --name audio-joiner --network media-tools-network --restart unless-stopped -p 5002:5002 audio-joiner:latest
+
+cd ~/website/without-db/video-cutter && docker build -t video-cutter:latest . && docker run -d --name video-cutter --network media-tools-network --restart unless-stopped -p 5003:5003 video-cutter:latest
+
+cd ~/website/without-db/audio-to-video && docker build -t audio-to-video:latest . && docker run -d --name audio-to-video --network media-tools-network --restart unless-stopped -p 5007:5007 audio-to-video:latest
+
+cd ~/website/without-db/user && docker build -t user:latest . && docker run -d --name user --network media-tools-network --restart unless-stopped -p 5006:5006 user:latest
+
+docker volume create media-mysql-data && docker run -d --name media-mysql --network media-tools-network --restart unless-stopped -p 127.0.0.1:3307:3306 -e MYSQL_ROOT_PASSWORD='CHANGE_ROOT_PASSWORD' -e MYSQL_DATABASE='media_tools' -e MYSQL_USER='media_user' -e MYSQL_PASSWORD='CHANGE_THIS_PASSWORD' -v media-mysql-data:/var/lib/mysql mysql:8.4
+
+cd ~/website/without-db/gateway && sed -i 's|AUDIO_CUTTER_URL=.*|AUDIO_CUTTER_URL=http://audio-cutter:5001|; s|AUDIO_JOINER_URL=.*|AUDIO_JOINER_URL=http://audio-joiner:5002|; s|VIDEO_CUTTER_URL=.*|VIDEO_CUTTER_URL=http://video-cutter:5003|; s|AUDIO_TO_VIDEO_URL=.*|AUDIO_TO_VIDEO_URL=http://audio-to-video:5007|' .env && docker build -t media-tools-gateway:latest . && docker run -d --name media-tools-gateway --network media-tools-network --restart unless-stopped -p 5000:5000 --env-file .env media-tools-gateway:latest
+
+docker ps

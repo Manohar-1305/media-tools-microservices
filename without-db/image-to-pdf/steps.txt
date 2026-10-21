@@ -1,0 +1,7 @@
+docker build -t image-to-pdf:latest .
+
+docker run -d --name image-to-pdf --network media-tools-network -p 5008:5008 --restart unless-stopped image-to-pdf:latest
+
+docker ps --filter name=image-to-pdf
+
+docker logs -f image-to-pdf

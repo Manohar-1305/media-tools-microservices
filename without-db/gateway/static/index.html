@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/static/style.css" />
+
+    <title>Media Tools</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        color: #202124;
+        background: #f5f7fb;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 6%;
+        background: #fff;
+        border-bottom: 1px solid #e5e7eb;
+        position: relative;
+        z-index: 10;
+      }
+
+      .brand {
+        font-size: 23px;
+        font-weight: 700;
+      }
+
+      .account-menu {
+        position: relative;
+      }
+
+      .account-toggle {
+        width: 46px;
+        height: 46px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e0e7ff;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4f46e5, #9333ea);
+        color: #fff;
+        cursor: pointer;
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
+      }
+
+      .account-toggle:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(79, 70, 229, 0.3);
+      }
+
+      .account-toggle svg {
+        width: 23px;
+        height: 23px;
+      }
+
+      .account-dropdown {
+        position: absolute;
+        top: calc(100% + 12px);
+        right: 0;
+        width: 270px;
+        padding: 16px;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
+        display: none;
+        animation: dropdownIn 0.18s ease-out;
+      }
+
+      .account-dropdown.open {
+        display: block;
+      }
+
+      .account-heading {
+        font-size: 12px;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 12px;
+      }
+
+      .account-identity {
+        padding: 12px;
+        margin-bottom: 12px;
+        background: #f5f3ff;
+        border-radius: 10px;
+        overflow-wrap: anywhere;
+        color: #4338ca;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .account-link,
+      .account-logout {
+        width: 100%;
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 11px 14px;
+        border-radius: 9px;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition:
+          transform 0.2s ease,
+          filter 0.2s ease;
+      }
+
+      .account-link {
+        margin-top: 9px;
+        background: #4f46e5;
+        color: #fff;
+      }
+
+      .account-link.register {
+        background: #0891b2;
+      }
+
+      .account-logout {
+        margin-top: 8px;
+        border: none;
+        background: #fff1f2;
+        color: #be123c;
+      }
+
+      .account-link:hover,
+      .account-logout:hover {
+        filter: brightness(0.97);
+        transform: translateY(-1px);
+      }
+
+      main {
+        max-width: 1150px;
+        margin: auto;
+        padding: 45px 22px;
+      }
+
+      .hero {
+        text-align: center;
+        margin-bottom: 38px;
+        padding: 35px 20px;
+        border-radius: 18px;
+        background: linear-gradient(120deg, #4f46e5, #9333ea, #38bdf8);
+        color: #fff;
+        box-shadow: 0 14px 35px rgba(79, 70, 229, 0.18);
+      }
+
+      .hero h1 {
+        font-size: 38px;
+        margin: 0 0 12px;
+      }
+
+      .hero p {
+        margin: 0;
+        color: #f1f5f9;
+        line-height: 1.6;
+      }
+
+      .tools {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+      }
+
+      .tool {
+        padding: 25px;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        box-shadow: 0 5px 18px rgba(15, 23, 42, 0.04);
+        transition:
+          transform 0.22s ease,
+          box-shadow 0.22s ease;
+      }
+
+      .tool:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 14px 28px rgba(15, 23, 42, 0.1);
+      }
+
+      .tool h2 {
+        font-size: 19px;
+        margin: 0 0 12px;
+      }
+
+      .tool p {
+        color: #606773;
+        line-height: 1.5;
+        min-height: 45px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 11px 17px;
+        border-radius: 8px;
+        border: none;
+        background: #4f46e5;
+        color: #fff;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        transition:
+          transform 0.2s ease,
+          filter 0.2s ease;
+      }
+
+      .button:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.1);
+      }
+
+      footer {
+        text-align: center;
+        padding: 25px;
+        color: #6b7280;
+        background: #fff;
+        margin-top: 45px;
+      }
+
+      @keyframes dropdownIn {
+        from {
+          opacity: 0;
+          transform: translateY(-6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 600px) {
+        header {
+          padding: 14px 18px;
+        }
+
+        .brand {
+          font-size: 19px;
+        }
+
+        main {
+          padding: 28px 16px;
+        }
+
+        .hero h1 {
+          font-size: 29px;
+        }
+
+        .account-dropdown {
+          width: min(270px, calc(100vw - 32px));
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+      .account-button {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-top: 8px;
+        border-radius: 9px;
+        background: #5145e5;
+        color: #fff;
+        text-align: center;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 14px;
+      }
+
+      .account-button:hover {
+        background: #4338ca;
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <div class="brand">Media Tools</div>
+
+      <div class="account-menu">
+        <button
+          class="account-toggle"
+          id="account-toggle"
+          type="button"
+          aria-label="Open account menu"
+          aria-expanded="false"
+          aria-controls="account-dropdown"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle
+              cx="12"
+              cy="8"
+              r="4"
+              stroke="currentColor"
+              stroke-width="2"
+            />
+            <path
+              d="M4 21c0-4.2 3.6-7 8-7s8 2.8 8 7"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+
+        <div class="account-dropdown" id="account-dropdown">
+          <div class="account-heading">Your account</div>
+          <div id="account-content"></div>
+          <a href="/services/" class="account-button">Services</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1>Simple Tools for Your Media</h1>
+        <p>Cut, combine and convert your files using our media services.</p>
+      </section>
+
+      <section class="tools">
+        <article class="tool">
+          <h2>Audio Cutter</h2>
+          <p>Cut audio files to the required duration.</p>
+          <a class="button" href="/audio-cutter/">Open Tool</a>
+        </article>
+
+        <article class="tool">
+          <h2>Audio Joiner</h2>
+          <p>Combine multiple audio files into one.</p>
+          <a class="button" href="/audio-joiner/">Open Tool</a>
+        </article>
+
+        <article class="tool">
+          <h2>Video Cutter</h2>
+          <p>Trim videos to your preferred length.</p>
+          <a class="button" href="/video-cutter/">Open Tool</a>
+        </article>
+
+        <article class="tool">
+          <h2>Audio To Video</h2>
+          <p>Convert audio files into MP4 videos with an optional image.</p>
+          <a class="button" href="/audio-to-video/">Open Tool</a>
+        </article>
+
+        <article class="tool">
+          <h2>PDF Converter</h2>
+          <p>Convert supported files to PDF.</p>
+          <a class="button" href="/pdf-converter/">Open Tool</a>
+        </article>
+
+        <article class="tool">
+          <h2>PDF Combiner</h2>
+          <p>Combine multiple PDF files into one document.</p>
+          <a class="button" href="/pdf-combiner/">Open Tool</a>
+        </article>
+
+        <article class="tool">
+          <h2>Image to PDF</h2>
+          <p>Convert multiple images into one downloadable PDF document.</p>
+          <a class="button" href="/image-to-pdf/">Open Tool</a>
+        </article>
+        <article class="tool">
+          <h2>PDF to JPG</h2>
+          <p>
+            Convert PDF pages into JPG images or extract embedded images, with
+            options to select pages and download multiple images as a ZIP.
+          </p>
+          <a class="button" href="/pdf-to-jpg/">Open Tool</a>
+        </article>
+
+        <article class="tool">
+          <h2>Video Subtitle</h2>
+          <p>
+            Add SRT subtitles to a video and download the subtitled video.
+            Maximum video size: 100 MB.
+          </p>
+          <a class="button" href="/video-subtitle/">Open Tool</a>
+        </article>
+        <article class="tool">
+          <h2>Word To PDF</h2>
+          <p>Convert Word documents into PDF files quickly and easily.</p>
+          <a class="button" href="/word-to-pdf/">Open Tool</a>
+        </article>
+        <article class="tool">
+          <h2>PDF To Word</h2>
+          <p>
+            Convert PDF documents into editable Word files quickly and easily.
+          </p>
+          <a class="button" href="/pdf-to-word/">Open Tool</a>
+        </article>
+        <article class="tool">
+          <h2>Image Compressor</h2>
+          <p>
+            Compress images and reduce file sizes quickly while maintaining
+            image quality.
+          </p>
+
+          <a class="button" href="/image-compressor/">Open Tool</a>
+        </article>
+        <article class="tool">
+          <h2>Video to GIF</h2>
+          <p>
+            Convert videos into animated GIFs quickly with customizable
+            duration, frame rate, and output width.
+          </p>
+          <a class="button" href="/video-to-gif/">Open Tool</a>
+        </article>
+
+        <article class="tool">
+          <h2>Video to Reels</h2>
+          <p>
+            Convert videos into vertical 9:16 MP4 videos for YouTube Shorts and
+            Instagram Reels, with customizable start time, duration, and output
+            resolution.
+          </p>
+          <a class="button" href="/video-to-reels/">Open Tool</a>
+        </article>
+      </section>
+    </main>
+
+    <footer>Media Tools</footer>
+
+    <script>
+      const accountToggle = document.getElementById("account-toggle");
+      const accountDropdown = document.getElementById("account-dropdown");
+      const accountContent = document.getElementById("account-content");
+
+      function renderAccountMenu() {
+        const username = localStorage.getItem("mediaToolsUsername");
+        accountContent.replaceChildren();
+
+        if (username) {
+          const identity = document.createElement("div");
+          identity.className = "account-identity";
+          identity.textContent = "Logged in as: " + username;
+
+          const logoutButton = document.createElement("button");
+          logoutButton.type = "button";
+          logoutButton.className = "account-logout";
+          logoutButton.textContent = "Logout";
+
+          logoutButton.addEventListener("click", () => {
+            localStorage.removeItem("mediaToolsUsername");
+            renderAccountMenu();
+            accountDropdown.classList.remove("open");
+            accountToggle.setAttribute("aria-expanded", "false");
+          });
+
+          accountContent.append(identity, logoutButton);
+        } else {
+          const loginLink = document.createElement("a");
+          loginLink.className = "account-link";
+          loginLink.href = "/user/?mode=login";
+          loginLink.textContent = "Login";
+
+          const registerLink = document.createElement("a");
+          registerLink.className = "account-link register";
+          registerLink.href = "/user/?mode=register";
+          registerLink.textContent = "Create Account";
+
+          accountContent.append(loginLink, registerLink);
+        }
+      }
+
+      renderAccountMenu();
+
+      accountToggle.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const isOpen = accountDropdown.classList.toggle("open");
+        accountToggle.setAttribute("aria-expanded", String(isOpen));
+      });
+
+      document.addEventListener("click", (event) => {
+        if (!event.target.closest(".account-menu")) {
+          accountDropdown.classList.remove("open");
+          accountToggle.setAttribute("aria-expanded", "false");
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          accountDropdown.classList.remove("open");
+          accountToggle.setAttribute("aria-expanded", "false");
+          accountToggle.focus();
+        }
+      });
+    </script>
+  </body>
+</html>

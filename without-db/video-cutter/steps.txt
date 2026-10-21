@@ -1,0 +1,4 @@
+cd ~/website/without-db/video-cutter
+docker build -t video-cutter:latest .
+docker rm -f video-cutter 2>/dev/null || true
+docker run -d --name video-cutter --network media-tools-network --restart unless-stopped -p 5003:5003 video-cutter:latest

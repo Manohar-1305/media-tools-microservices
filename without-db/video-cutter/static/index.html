@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Video Cutter Studio</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Arial, sans-serif;
+      }
+      body {
+        margin: 0;
+        background: #10141c;
+        color: #edf2fa;
+      }
+      main {
+        max-width: 1000px;
+        margin: 30px auto;
+        padding: 20px;
+      }
+      h1 {
+        margin-bottom: 8px;
+      }
+      .muted {
+        color: #a8b4c6;
+      }
+      .panel {
+        background: #1a2230;
+        border: 1px solid #303d50;
+        border-radius: 14px;
+        padding: 20px;
+        margin: 18px 0;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 7px;
+        color: #cbd6e6;
+      }
+      input,
+      select,
+      button {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 11px;
+        border-radius: 8px;
+        border: 1px solid #3b4a60;
+        background: #111824;
+        color: #fff;
+      }
+      input[type="range"] {
+        padding: 0;
+      }
+      button {
+        cursor: pointer;
+        border: 0;
+        background: #367bf5;
+        font-weight: bold;
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: wait;
+      }
+      video {
+        width: 100%;
+        max-height: 480px;
+        background: #05070a;
+        border-radius: 10px;
+      }
+      progress {
+        width: 100%;
+        height: 18px;
+        accent-color: #367bf5;
+      }
+      .status {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        margin: 12px 0;
+      }
+      .error {
+        color: #ff8585;
+      }
+      .success {
+        color: #75e2a3;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .row > * {
+        flex: 1;
+      }
+      a {
+        color: #8cb7ff;
+      }
+
+      .trim-timeline {
+        position: relative;
+        height: 58px;
+        margin: 20px 4px 8px;
+        user-select: none;
+        touch-action: none;
+      }
+      .timeline-track {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 20px;
+        height: 12px;
+        background: #3b4658;
+        border-radius: 6px;
+      }
+      .timeline-selection {
+        position: absolute;
+        top: 20px;
+        height: 12px;
+        left: 0;
+        width: 100%;
+        background: #367bf5;
+        border-radius: 4px;
+        pointer-events: none;
+      }
+      .trim-handle {
+        position: absolute;
+        top: 8px;
+        width: 18px;
+        height: 36px;
+        padding: 0;
+        transform: translateX(-50%);
+        border: 2px solid white;
+        border-radius: 5px;
+        background: #367bf5;
+        cursor: ew-resize;
+        z-index: 2;
+        touch-action: none;
+      }
+      .trim-handle::after {
+        content: "";
+        position: absolute;
+        top: 8px;
+        left: 6px;
+        width: 2px;
+        height: 16px;
+        background: white;
+        box-shadow: 4px 0 white;
+      }
+      .timeline-labels {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        color: #a8b4c6;
+        font-size: 13px;
+        margin-top: 7px;
+      }
+      .time-display {
+        font-variant-numeric: tabular-nums;
+        color: #edf2fa;
+      }
+      @media (max-width: 600px) {
+        main {
+          padding: 12px;
+        }
+        .panel {
+          padding: 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Video Cutter Studio</h1>
+      <p class="muted">
+        Upload a video, drag the left and right handles to select a section, and
+        download the processed MP4.
+      </p>
+
+      <section class="panel">
+        <label for="videoFile"
+          >Choose video (maximum 500 MB, maximum 1 hour)</label
+        >
+        <input
+          id="videoFile"
+          type="file"
+          accept="video/*,.mkv,.avi,.mov,.webm,.m4v,.ts"
+        />
+        <p id="videoInfo" class="muted">No video selected.</p>
+        <video id="preview" controls hidden></video>
+      </section>
+
+      <section class="panel">
+        <h2>Trim video</h2>
+
+        <div class="grid">
+          <div>
+            <label for="start">Start time (MM:SS)</label>
+            <input
+              id="start"
+              type="text"
+              inputmode="numeric"
+              value="00:00"
+              placeholder="MM:SS"
+            />
+          </div>
+          <div>
+            <label for="end">End time (MM:SS)</label>
+            <input
+              id="end"
+              type="text"
+              inputmode="numeric"
+              value="00:00"
+              placeholder="MM:SS"
+            />
+          </div>
+        </div>
+
+        <div
+          id="trimTimeline"
+          class="trim-timeline"
+          aria-label="Video trim selection"
+        >
+          <div class="timeline-track"></div>
+          <div id="timelineSelection" class="timeline-selection"></div>
+          <button
+            id="startHandle"
+            class="trim-handle"
+            type="button"
+            aria-label="Drag start trim handle"
+            title="Drag to set start time"
+          ></button>
+          <button
+            id="endHandle"
+            class="trim-handle"
+            type="button"
+            aria-label="Drag end trim handle"
+            title="Drag to set end time"
+          ></button>
+          <div class="timeline-labels">
+            <span id="timelineStart" class="time-display">00:00</span>
+            <span id="timelineEnd" class="time-display">00:00</span>
+          </div>
+        </div>
+
+        <p id="selectionInfo" class="muted">
+          Select a video to set the trim range.
+        </p>
+      </section>
+
+      <section class="panel">
+        <h2>Output settings</h2>
+        <div class="grid">
+          <div>
+            <label for="speed">Playback speed</label>
+            <select id="speed">
+              <option value="0.25">0.25×</option>
+              <option value="0.5">0.5×</option>
+              <option value="0.75">0.75×</option>
+              <option value="1" selected>1×</option>
+              <option value="1.25">1.25×</option>
+              <option value="1.5">1.5×</option>
+              <option value="2">2×</option>
+              <option value="3">3×</option>
+              <option value="4">4×</option>
+            </select>
+          </div>
+          <div>
+            <label for="volume">Volume</label>
+            <select id="volume">
+              <option value="0">Mute</option>
+              <option value="0.5">50%</option>
+              <option value="1" selected>100%</option>
+              <option value="1.5">150%</option>
+              <option value="2">200%</option>
+              <option value="3">300%</option>
+            </select>
+          </div>
+          <div>
+            <label for="rotation">Rotation</label>
+            <select id="rotation">
+              <option value="0">None</option>
+              <option value="90">90° clockwise</option>
+              <option value="180">180°</option>
+              <option value="270">90° counterclockwise</option>
+            </select>
+          </div>
+          <div>
+            <label for="filter">Video filter</label>
+            <select id="filter">
+              <option value="none">None</option>
+              <option value="grayscale">Grayscale</option>
+              <option value="sepia">Sepia</option>
+              <option value="blur">Blur</option>
+              <option value="sharpen">Sharpen</option>
+            </select>
+          </div>
+          <div>
+            <label for="overlayText">Text overlay (optional)</label>
+            <input
+              id="overlayText"
+              type="text"
+              maxlength="200"
+              placeholder="Text displayed on video"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <button id="cutButton" type="button">Cut video</button>
+        <h3 id="stageTitle">Ready</h3>
+        <progress id="progress" value="0" max="100"></progress>
+        <p id="status" class="status" aria-live="polite">
+          Choose a video to begin.
+        </p>
+        <div class="grid">
+          <p>Progress: <strong id="percent">0%</strong></p>
+          <p>Elapsed: <strong id="elapsed">0 sec</strong></p>
+          <p>Estimated remaining: <strong id="remaining">—</strong></p>
+        </div>
+        <p id="downloadArea"></p>
+      </section>
+    </main>
+
+    <script>
+      "use strict";
+
+      const CUTTER_URL = "http://127.0.0.1:5003";
+      const MAX_DURATION = 3600;
+      const MAX_SIZE = 500 * 1024 * 1024;
+
+      const fileInput = document.getElementById("videoFile");
+      const preview = document.getElementById("preview");
+      const videoInfo = document.getElementById("videoInfo");
+      const startInput = document.getElementById("start");
+      const endInput = document.getElementById("end");
+      const selectionInfo = document.getElementById("selectionInfo");
+      const cutButton = document.getElementById("cutButton");
+      const progressBar = document.getElementById("progress");
+      const statusElement = document.getElementById("status");
+      const stageTitle = document.getElementById("stageTitle");
+      const percentElement = document.getElementById("percent");
+      const elapsedElement = document.getElementById("elapsed");
+      const remainingElement = document.getElementById("remaining");
+      const downloadArea = document.getElementById("downloadArea");
+      const trimTimeline = document.getElementById("trimTimeline");
+      const timelineSelection = document.getElementById("timelineSelection");
+      const startHandle = document.getElementById("startHandle");
+      const endHandle = document.getElementById("endHandle");
+      const timelineStart = document.getElementById("timelineStart");
+      const timelineEnd = document.getElementById("timelineEnd");
+
+      let videoDuration = 0;
+      let polling = false;
+      let activeJobId = null;
+      let startedAt = 0;
+      let previewUrl = null;
+      let draggingHandle = null;
+
+      function setStatus(message, type = "") {
+        statusElement.textContent = message;
+        statusElement.className = "status " + type;
+      }
+
+      function formatTime(seconds) {
+        if (!Number.isFinite(seconds) || seconds < 0) return "Calculating…";
+        seconds = Math.ceil(seconds);
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+
+        if (hours > 0) return `${hours}h ${minutes}m ${secs}s`;
+        if (minutes > 0) return `${minutes}m ${secs}s`;
+        return `${secs} sec`;
+      }
+
+      function formatTimestamp(seconds) {
+        if (!Number.isFinite(seconds) || seconds < 0) return "00:00";
+        seconds = Math.floor(seconds);
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+      }
+
+      function parseTimestamp(value) {
+        const text = String(value).trim();
+
+        if (/^\d+(\.\d+)?$/.test(text)) {
+          return Number(text);
+        }
+
+        const parts = text.split(":");
+        if (
+          parts.length !== 2 ||
+          !parts.every((part) => /^\d+(\.\d+)?$/.test(part))
+        ) {
+          return NaN;
+        }
+
+        return Number(parts[0]) * 60 + Number(parts[1]);
+      }
+
+      function updateTimeline() {
+        const start = parseTimestamp(startInput.value);
+        const end = parseTimestamp(endInput.value);
+
+        const safeStart = Number.isFinite(start)
+          ? Math.max(0, Math.min(start, videoDuration))
+          : 0;
+        const safeEnd = Number.isFinite(end)
+          ? Math.max(0, Math.min(end, videoDuration))
+          : videoDuration;
+
+        const startPercent =
+          videoDuration > 0 ? (safeStart / videoDuration) * 100 : 0;
+        const endPercent =
+          videoDuration > 0 ? (safeEnd / videoDuration) * 100 : 100;
+
+        startHandle.style.left = `${startPercent}%`;
+        endHandle.style.left = `${endPercent}%`;
+        timelineSelection.style.left = `${startPercent}%`;
+        timelineSelection.style.width = `${Math.max(0, endPercent - startPercent)}%`;
+
+        timelineStart.textContent = formatTimestamp(safeStart);
+        timelineEnd.textContent = formatTimestamp(safeEnd);
+      }
+
+      function updateSelectionInfo() {
+        const start = parseTimestamp(startInput.value);
+        const end = parseTimestamp(endInput.value);
+        const selected = end - start;
+
+        updateTimeline();
+
+        if (!videoDuration) {
+          selectionInfo.textContent = "Select a video to set the trim range.";
+          return;
+        }
+
+        if (!Number.isFinite(start) || !Number.isFinite(end)) {
+          selectionInfo.textContent = "Enter time in MM:SS format.";
+          return;
+        }
+
+        if (start < 0 || end > videoDuration || end <= start) {
+          selectionInfo.textContent =
+            "Choose a valid start and end time within the video.";
+          return;
+        }
+
+        if (selected > MAX_DURATION) {
+          selectionInfo.textContent =
+            "The selected section cannot exceed 1 hour.";
+          return;
+        }
+
+        selectionInfo.textContent =
+          `Video duration: ${formatTimestamp(videoDuration)}. ` +
+          `Selected section: ${formatTimestamp(selected)}.`;
+      }
+
+      function setTimeFromTimeline(clientX, whichHandle) {
+        if (!videoDuration) return;
+
+        const rect = trimTimeline.getBoundingClientRect();
+        const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
+        const seconds = Math.round((x / rect.width) * videoDuration);
+        const currentStart = parseTimestamp(startInput.value) || 0;
+        const currentEnd = parseTimestamp(endInput.value) || videoDuration;
+
+        if (whichHandle === "start") {
+          startInput.value = formatTimestamp(Math.min(seconds, currentEnd - 1));
+        } else {
+          endInput.value = formatTimestamp(Math.max(seconds, currentStart + 1));
+        }
+
+        updateSelectionInfo();
+      }
+
+      startHandle.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        draggingHandle = "start";
+        startHandle.setPointerCapture(event.pointerId);
+      });
+
+      endHandle.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        draggingHandle = "end";
+        endHandle.setPointerCapture(event.pointerId);
+      });
+
+      startHandle.addEventListener("pointermove", (event) => {
+        if (draggingHandle === "start")
+          setTimeFromTimeline(event.clientX, "start");
+      });
+
+      endHandle.addEventListener("pointermove", (event) => {
+        if (draggingHandle === "end") setTimeFromTimeline(event.clientX, "end");
+      });
+
+      for (const handle of [startHandle, endHandle]) {
+        handle.addEventListener("pointerup", () => {
+          draggingHandle = null;
+        });
+        handle.addEventListener("pointercancel", () => {
+          draggingHandle = null;
+        });
+      }
+
+      trimTimeline.addEventListener("pointerdown", (event) => {
+        if (
+          event.target === startHandle ||
+          event.target === endHandle ||
+          !videoDuration
+        )
+          return;
+
+        const start = parseTimestamp(startInput.value) || 0;
+        const end = parseTimestamp(endInput.value) || videoDuration;
+        const rect = trimTimeline.getBoundingClientRect();
+        const clickSeconds =
+          ((event.clientX - rect.left) / rect.width) * videoDuration;
+
+        setTimeFromTimeline(
+          event.clientX,
+          Math.abs(clickSeconds - start) <= Math.abs(clickSeconds - end)
+            ? "start"
+            : "end",
+        );
+      });
+
+      startInput.addEventListener("change", () => {
+        const value = parseTimestamp(startInput.value);
+        if (Number.isFinite(value)) startInput.value = formatTimestamp(value);
+        updateSelectionInfo();
+      });
+
+      endInput.addEventListener("change", () => {
+        const value = parseTimestamp(endInput.value);
+        if (Number.isFinite(value)) endInput.value = formatTimestamp(value);
+        updateSelectionInfo();
+      });
+
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files && fileInput.files[0];
+        downloadArea.replaceChildren();
+        progressBar.value = 0;
+        percentElement.textContent = "0%";
+        elapsedElement.textContent = "0 sec";
+        remainingElement.textContent = "—";
+        cutButton.disabled = false;
+
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        previewUrl = null;
+        videoDuration = 0;
+        preview.hidden = true;
+        updateTimeline();
+
+        if (!file) {
+          videoInfo.textContent = "No video selected.";
+          selectionInfo.textContent = "Select a video to set the trim range.";
+          return;
+        }
+
+        if (file.size > MAX_SIZE) {
+          fileInput.value = "";
+          videoInfo.textContent = "File exceeds the 500 MB limit.";
+          setStatus("Choose a video smaller than 500 MB.", "error");
+          return;
+        }
+
+        previewUrl = URL.createObjectURL(file);
+        preview.src = previewUrl;
+        preview.hidden = false;
+        videoInfo.textContent = `${file.name} · ${(file.size / 1024 / 1024).toFixed(1)} MB`;
+        setStatus("Reading video metadata…");
+
+        preview.onloadedmetadata = () => {
+          videoDuration = preview.duration;
+
+          if (!Number.isFinite(videoDuration) || videoDuration <= 0) {
+            setStatus("Unable to determine video duration.", "error");
+            return;
+          }
+
+          videoInfo.textContent =
+            `${file.name} · ${(file.size / 1024 / 1024).toFixed(1)} MB · ` +
+            `Actual video duration: ${formatTimestamp(videoDuration)}`;
+
+          if (videoDuration > MAX_DURATION) {
+            videoInfo.textContent += " — exceeds 1 hour";
+            setStatus(
+              "This video is longer than 1 hour. Choose a video that is 1 hour or shorter.",
+              "error",
+            );
+            cutButton.disabled = true;
+            return;
+          }
+
+          cutButton.disabled = false;
+          startInput.value = "00:00";
+          endInput.value = formatTimestamp(videoDuration);
+          endInput.max = formatTimestamp(videoDuration);
+          startInput.max = formatTimestamp(videoDuration);
+          setStatus(
+            "Video loaded. Drag the left and right handles to select the section to cut.",
+          );
+          updateSelectionInfo();
+        };
+
+        preview.onerror = () => {
+          setStatus(
+            "The browser could not preview this video format. The server may still support it.",
+            "error",
+          );
+        };
+      });
+
+      function uploadFile(formData) {
+        return new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", CUTTER_URL + "/cut");
+          xhr.responseType = "text";
+
+          xhr.upload.onprogress = (event) => {
+            if (!event.lengthComputable) return;
+            const value = Math.round((event.loaded / event.total) * 100);
+            progressBar.value = value;
+            percentElement.textContent = value + "%";
+            stageTitle.textContent = "Uploading video";
+            setStatus(`Uploading video: ${value}%`);
+          };
+
+          xhr.onload = () => {
+            let data = {};
+            try {
+              data = JSON.parse(xhr.responseText || "{}");
+            } catch {
+              reject(new Error("The server returned an invalid response."));
+              return;
+            }
+
+            if (xhr.status < 200 || xhr.status >= 300) {
+              reject(
+                new Error(data.error || `Upload failed (HTTP ${xhr.status}).`),
+              );
+              return;
+            }
+
+            resolve(data);
+          };
+
+          xhr.onerror = () =>
+            reject(
+              new Error(
+                `Cannot connect to ${CUTTER_URL}. Ensure the Flask service is running on port 5003 and open this page over HTTP.`,
+              ),
+            );
+
+          xhr.ontimeout = () => reject(new Error("Upload timed out."));
+          xhr.timeout = 0;
+          xhr.send(formData);
+        });
+      }
+
+      async function pollJob(jobId) {
+        if (polling) return;
+        polling = true;
+
+        try {
+          while (true) {
+            const response = await fetch(
+              `${CUTTER_URL}/status/${encodeURIComponent(jobId)}`,
+              { cache: "no-store" },
+            );
+
+            let data;
+            try {
+              data = await response.json();
+            } catch {
+              throw new Error(
+                "The server returned an invalid status response.",
+              );
+            }
+
+            if (!response.ok) {
+              throw new Error(
+                data.error || "Unable to retrieve processing status.",
+              );
+            }
+
+            const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+            elapsedElement.textContent = formatTime(
+              data.elapsed_seconds ?? elapsed,
+            );
+
+            if (data.state === "queued") {
+              stageTitle.textContent = "Preparing video";
+              progressBar.value = 0;
+              percentElement.textContent = "0%";
+              remainingElement.textContent = formatTime(data.estimated_seconds);
+              setStatus(
+                data.message || "Upload complete. Starting video processing…",
+              );
+            } else if (data.state === "processing") {
+              const value = Math.max(
+                0,
+                Math.min(99, Number(data.progress) || 0),
+              );
+              progressBar.value = value;
+              percentElement.textContent = value + "%";
+              stageTitle.textContent = "Processing video";
+              remainingElement.textContent = formatTime(data.estimated_seconds);
+              setStatus(
+                `${data.message || "Processing video…"}\n` +
+                  `Elapsed: ${formatTime(data.elapsed_seconds ?? elapsed)}\n` +
+                  `Estimated remaining: ${formatTime(data.estimated_seconds)}`,
+              );
+            } else if (data.state === "completed") {
+              progressBar.value = 100;
+              percentElement.textContent = "100%";
+              remainingElement.textContent = "0 sec";
+              stageTitle.textContent = "Completed";
+              setStatus(
+                `Video is ready.\nTotal processing time: ${formatTime(data.elapsed_seconds ?? elapsed)}.`,
+                "success",
+              );
+
+              const link = document.createElement("a");
+              link.href = CUTTER_URL + data.download_url;
+              link.textContent = "Download cut video";
+              link.download = "cut_video.mp4";
+              downloadArea.replaceChildren(link);
+              return;
+            } else if (data.state === "failed") {
+              throw new Error(
+                data.error || data.message || "Video processing failed.",
+              );
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+        } finally {
+          polling = false;
+        }
+      }
+
+      cutButton.addEventListener("click", async () => {
+        const file = fileInput.files && fileInput.files[0];
+
+        if (!file) {
+          setStatus("Choose a video first.", "error");
+          return;
+        }
+
+        if (videoDuration > MAX_DURATION) {
+          setStatus(
+            "Cannot cut this video because it is longer than 1 hour.",
+            "error",
+          );
+          return;
+        }
+
+        const start = parseTimestamp(startInput.value);
+        const end = parseTimestamp(endInput.value);
+
+        if (
+          !Number.isFinite(start) ||
+          !Number.isFinite(end) ||
+          start < 0 ||
+          end <= start ||
+          end > videoDuration
+        ) {
+          setStatus(
+            "Enter valid start and end timestamps in MM:SS format within the video duration.",
+            "error",
+          );
+          return;
+        }
+
+        if (end - start > MAX_DURATION) {
+          setStatus("The selected section cannot exceed 1 hour.", "error");
+          return;
+        }
+
+        if (activeJobId) {
+          setStatus(
+            "A video job is already running. Wait for it to finish.",
+            "error",
+          );
+          return;
+        }
+
+        cutButton.disabled = true;
+        downloadArea.replaceChildren();
+        progressBar.value = 0;
+        percentElement.textContent = "0%";
+        elapsedElement.textContent = "0 sec";
+        remainingElement.textContent = "Calculating…";
+        startedAt = Date.now();
+
+        const formData = new FormData();
+        formData.append("file", file, file.name);
+        formData.append("start", String(start));
+        formData.append("end", String(end));
+        formData.append("speed", document.getElementById("speed").value);
+        formData.append("volume", document.getElementById("volume").value);
+        formData.append("rotation", document.getElementById("rotation").value);
+        formData.append("filter", document.getElementById("filter").value);
+        formData.append(
+          "overlay_text",
+          document.getElementById("overlayText").value,
+        );
+
+        try {
+          stageTitle.textContent = "Uploading video";
+          setStatus("Starting upload…");
+
+          const result = await uploadFile(formData);
+          activeJobId = result.job_id;
+
+          stageTitle.textContent = "Processing video";
+          progressBar.value = 0;
+          percentElement.textContent = "0%";
+          setStatus("Upload complete. Waiting for server processing…");
+
+          await pollJob(activeJobId);
+        } catch (error) {
+          stageTitle.textContent = "Failed";
+          setStatus(error.message || "An unexpected error occurred.", "error");
+          remainingElement.textContent = "—";
+        } finally {
+          activeJobId = null;
+          cutButton.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

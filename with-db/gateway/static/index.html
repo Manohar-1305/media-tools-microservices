@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Media Tools</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        color: #202124;
+        background: #f5f7fb;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 6%;
+        background: #fff;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .brand {
+        font-size: 23px;
+        font-weight: 700;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+      }
+      a {
+        text-decoration: none;
+      }
+      .button {
+        display: inline-block;
+        padding: 11px 17px;
+        border-radius: 7px;
+        border: 1px solid #2563eb;
+        background: #2563eb;
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .button.secondary {
+        background: white;
+        color: #2563eb;
+      }
+      main {
+        max-width: 1150px;
+        margin: auto;
+        padding: 45px 22px;
+      }
+      .hero {
+        text-align: center;
+        margin-bottom: 38px;
+      }
+      .hero h1 {
+        font-size: 38px;
+        margin-bottom: 12px;
+      }
+      .hero p {
+        color: #606773;
+      }
+      .tools {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+      }
+      .tool {
+        padding: 25px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+      }
+      .tool h2 {
+        font-size: 19px;
+        margin-top: 0;
+      }
+      .tool p {
+        color: #606773;
+        line-height: 1.5;
+        min-height: 45px;
+      }
+      .service-section {
+        margin-top: 55px;
+      }
+      .section-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 15px;
+      }
+      .section-heading h2 {
+        margin: 0;
+      }
+      #service-status {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .service-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        padding: 15px 18px;
+        border-bottom: 1px solid #edf0f4;
+      }
+      .service-row:last-child {
+        border-bottom: 0;
+      }
+      .status {
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .healthy {
+        color: #15803d;
+      }
+      .unhealthy {
+        color: #b45309;
+      }
+      .unreachable {
+        color: #dc2626;
+      }
+      .checking {
+        color: #64748b;
+      }
+      #status-updated {
+        color: #64748b;
+        font-size: 12px;
+      }
+      footer {
+        text-align: center;
+        padding: 25px;
+        color: #6b7280;
+        background: white;
+        margin-top: 45px;
+      }
+      @media (max-width: 600px) {
+        header {
+          padding: 16px;
+        }
+        .brand {
+          font-size: 19px;
+        }
+        .button {
+          padding: 10px 12px;
+        }
+        .hero h1 {
+          font-size: 30px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">Media Tools</div>
+      <nav class="actions" id="account-actions">
+        <a class="button secondary" href="/user/?mode=login">Login</a>
+        <a class="button" href="/user/?mode=register">Create Account</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1>Simple Tools for Your Media</h1>
+        <p>Cut, combine and convert your files using our media services.</p>
+      </section>
+
+      <section class="tools">
+        <article class="tool">
+          <h2>Audio Cutter</h2>
+          <p>Cut audio files to the required duration.</p>
+          <a class="button" href="/audio-cutter/">Open Tool</a>
+        </article>
+
+        <article class="tool">
+          <h2>Audio Joiner</h2>
+          <p>Combine multiple audio files into one.</p>
+          <a class="button" href="/audio-joiner/">Open Tool</a>
+        </article>
+
+        <article class="tool">
+          <h2>Video Cutter</h2>
+          <p>Trim videos to your preferred length.</p>
+          <a class="button" href="/video-cutter/">Open Tool</a>
+        </article>
+
+        <article class="tool">
+          <h2>PDF Converter</h2>
+          <p>Convert supported files to PDF.</p>
+          <a class="button" href="/pdf-converter/">Open Tool</a>
+        </article>
+
+        <article class="tool">
+          <h2>PDF Combiner</h2>
+          <p>Combine multiple PDF files into one document.</p>
+          <a class="button" href="/pdf-combiner/">Open Tool</a>
+        </article>
+      </section>
+
+      <section class="service-section">
+        <div class="section-heading">
+          <div>
+            <h2>Service Status</h2>
+            <div id="status-updated">Checking services...</div>
+          </div>
+          <button
+            class="button"
+            id="test-all"
+            type="button"
+            onclick="checkServices()"
+          >
+            Test All
+          </button>
+        </div>
+        <div id="service-status"></div>
+      </section>
+    </main>
+
+    <footer>Media Tools</footer>
+
+    <script>
+      const username = localStorage.getItem("mediaToolsUsername");
+      const accountActions = document.getElementById("account-actions");
+
+      if (username) {
+        accountActions.replaceChildren();
+
+        const loggedInLabel = document.createElement("span");
+        loggedInLabel.textContent = "Logged in as: " + username;
+        loggedInLabel.style.fontWeight = "600";
+        loggedInLabel.style.alignSelf = "center";
+
+        const logoutButton = document.createElement("button");
+        logoutButton.className = "button secondary";
+        logoutButton.textContent = "Logout";
+
+        logoutButton.addEventListener("click", () => {
+          localStorage.removeItem("mediaToolsUsername");
+          window.location.reload();
+        });
+
+        accountActions.append(loggedInLabel, logoutButton);
+      }
+
+      const statusContainer = document.getElementById("service-status");
+      const updatedLabel = document.getElementById("status-updated");
+      const testAllButton = document.getElementById("test-all");
+
+      async function checkServices() {
+        testAllButton.disabled = true;
+        testAllButton.textContent = "Testing...";
+
+        const loadingRow = document.createElement("div");
+        loadingRow.className = "service-row";
+        loadingRow.textContent = "Checking services...";
+        statusContainer.replaceChildren(loadingRow);
+
+        try {
+          const response = await fetch("/api/services", {
+            cache: "no-store",
+          });
+
+          if (!response.ok) {
+            throw new Error("Service status request failed");
+          }
+
+          const services = await response.json();
+          const fragment = document.createDocumentFragment();
+
+          for (const [name, status] of Object.entries(services)) {
+            const row = document.createElement("div");
+            row.className = "service-row";
+
+            const serviceName = document.createElement("span");
+            serviceName.textContent = name
+              .split("-")
+              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(" ");
+
+            const serviceStatus = document.createElement("span");
+            serviceStatus.className = "status " + status;
+            serviceStatus.textContent = status.toUpperCase();
+
+            row.append(serviceName, serviceStatus);
+            fragment.appendChild(row);
+          }
+
+          statusContainer.replaceChildren(fragment);
+          updatedLabel.textContent =
+            "Last checked: " + new Date().toLocaleTimeString();
+        } catch (error) {
+          const row = document.createElement("div");
+          row.className = "service-row";
+          row.textContent = "Unable to retrieve service status.";
+          statusContainer.replaceChildren(row);
+          updatedLabel.textContent = "Status check failed";
+        } finally {
+          testAllButton.disabled = false;
+          testAllButton.textContent = "Test All";
+        }
+      }
+
+      checkServices();
+      setInterval(checkServices, 60000);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+docker build -t video-to-reels:latest .
+
+docker run -d --name video-to-reels --network media-tools-network -p 5015:5015 --restart unless-stopped video-to-reels:latest
+
+docker ps
+
+docker logs -f video-to-reels

@@ -1,0 +1,1124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video to Shorts & Reels</title>
+    <style>
+      :root {
+        --primary: #635bff;
+        --primary-dark: #453be5;
+        --pink: #ec4899;
+        --cyan: #06b6d4;
+        --green: #059669;
+        --text: #172033;
+        --muted: #64748b;
+        --border: #e2e8f0;
+      }
+
+      input[type="file"]::file-selector-button {
+        background: linear-gradient(135deg, #635bff, #d946ef);
+        color: #ffffff;
+        border: none;
+        border-radius: 7px;
+        padding: 9px 16px;
+        margin-right: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      input[type="file"]::file-selector-button:hover {
+        background: linear-gradient(135deg, #453be5, #be185d);
+        box-shadow: 0 4px 12px rgba(99, 91, 255, 0.3);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 32px 16px;
+        font-family: Inter, "Segoe UI", Arial, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(ellipse at 5% 5%, #ddd9ff 0, transparent 35%),
+          radial-gradient(ellipse at 95% 15%, #fce7f3 0, transparent 30%),
+          linear-gradient(135deg, #f5f7ff, #eefaff 55%, #faf5ff);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 960px;
+        margin: 0 auto;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        border-radius: 24px;
+        box-shadow: 0 24px 80px rgba(48, 55, 120, 0.14);
+      }
+
+      .hero {
+        padding: 36px 30px 32px;
+        text-align: center;
+        color: white;
+        background: linear-gradient(120deg, #4338ca, #7557ff 52%, #d946ef);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::before,
+      .hero::after {
+        content: "";
+        position: absolute;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 50%;
+        pointer-events: none;
+      }
+
+      .hero::before {
+        width: 250px;
+        height: 250px;
+        top: -170px;
+        left: -45px;
+      }
+
+      .hero::after {
+        width: 300px;
+        height: 300px;
+        right: -100px;
+        bottom: -245px;
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 1;
+      }
+
+      .eyebrow {
+        display: inline-block;
+        padding: 7px 12px;
+        margin-bottom: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        border-radius: 100px;
+        background: rgba(255, 255, 255, 0.14);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(28px, 5vw, 42px);
+        letter-spacing: -1.2px;
+      }
+
+      .subtitle {
+        max-width: 580px;
+        margin: 12px auto 0;
+        color: #f0edff;
+        font-size: 15px;
+        line-height: 1.65;
+      }
+
+      .content {
+        padding: 28px;
+      }
+
+      .section {
+        margin-bottom: 24px;
+        padding: 22px;
+        border: 1px solid var(--border);
+        border-radius: 17px;
+        background: #fff;
+      }
+
+      .section-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 18px;
+        font-size: 17px;
+        font-weight: 800;
+      }
+
+      .step {
+        display: inline-grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        flex: 0 0 30px;
+        border-radius: 10px;
+        color: white;
+        background: linear-gradient(135deg, var(--primary), var(--pink));
+        font-size: 14px;
+      }
+
+      .field {
+        min-width: 0;
+        margin-bottom: 18px;
+      }
+      .field:last-child {
+        margin-bottom: 0;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 9px;
+        font-size: 13px;
+        font-weight: 750;
+        color: #344054;
+      }
+
+      input[type="file"],
+      input[type="number"],
+      select {
+        width: 100%;
+        min-height: 45px;
+        padding: 11px 12px;
+        border: 1px solid #d5dced;
+        border-radius: 10px;
+        outline: none;
+        background: #fbfcff;
+        color: var(--text);
+        font: inherit;
+        font-size: 14px;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+
+      input:focus,
+      select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.13);
+      }
+
+      input[type="file"] {
+        padding: 9px;
+      }
+
+      .upload-box {
+        padding: 16px;
+        border: 2px dashed #c7c6ff;
+        border-radius: 13px;
+        background: linear-gradient(120deg, #f6f5ff, #fff7fc);
+      }
+
+      .note {
+        margin: 9px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.65;
+      }
+
+      .settings {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .ratio-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .ratio-option {
+        position: relative;
+      }
+
+      .ratio-option input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .ratio-option label {
+        display: flex;
+        min-height: 92px;
+        margin: 0;
+        padding: 10px 4px;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        border: 1px solid #e0e5f0;
+        border-radius: 12px;
+        background: #fafbff;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+
+      .ratio-option input:checked + label {
+        border: 2px solid var(--primary);
+        background: #f0efff;
+        box-shadow: 0 4px 14px rgba(99, 91, 255, 0.12);
+        color: var(--primary-dark);
+      }
+
+      .ratio-option label:hover {
+        border-color: #a5a0ff;
+      }
+
+      .ratio-shape {
+        display: block;
+        width: 19px;
+        height: 32px;
+        border: 2px solid currentColor;
+        border-radius: 4px;
+      }
+
+      .ratio-45 {
+        width: 24px;
+        height: 30px;
+      }
+      .ratio-11 {
+        width: 27px;
+        height: 27px;
+      }
+      .ratio-169 {
+        width: 36px;
+        height: 21px;
+      }
+
+      .ratio-name {
+        font-size: 13px;
+        font-weight: 800;
+      }
+      .ratio-description {
+        font-size: 10px;
+        color: var(--muted);
+      }
+
+      .video-stage {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+        border-radius: 12px;
+        background: #101323;
+        line-height: 0;
+        touch-action: pan-y;
+      }
+
+      .video-stage video {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-height: 560px;
+        margin: 0;
+        border-radius: 12px;
+        background: #101323;
+      }
+
+      .crop-overlay {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+      }
+
+      .crop-frame {
+        position: absolute;
+        border: 2px solid #fff;
+        outline: 2px solid var(--primary);
+        box-shadow: 0 0 0 9999px rgba(8, 12, 30, 0.68);
+        cursor: grab;
+        pointer-events: auto;
+        touch-action: none;
+        background: transparent;
+      }
+
+      .crop-frame:active {
+        cursor: grabbing;
+      }
+
+      .crop-frame::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(
+            to right,
+            transparent 33.1%,
+            rgba(255, 255, 255, 0.5) 33.3%,
+            transparent 33.6%,
+            transparent 66.4%,
+            rgba(255, 255, 255, 0.5) 66.6%,
+            transparent 66.9%
+          ),
+          linear-gradient(
+            to bottom,
+            transparent 33.1%,
+            rgba(255, 255, 255, 0.5) 33.3%,
+            transparent 33.6%,
+            transparent 66.4%,
+            rgba(255, 255, 255, 0.5) 66.6%,
+            transparent 66.9%
+          );
+        pointer-events: none;
+      }
+
+      .crop-tag {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        padding: 6px 8px;
+        border-radius: 6px;
+        background: var(--primary);
+        color: white;
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1.2;
+        white-space: nowrap;
+        pointer-events: none;
+      }
+
+      .crop-help {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 12px;
+        padding: 11px 13px;
+        border-radius: 10px;
+        background: #f0efff;
+        color: #4f46a5;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .range-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 9px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--primary);
+        cursor: pointer;
+      }
+
+      .start-value {
+        display: inline-block;
+        padding: 4px 9px;
+        border-radius: 7px;
+        background: #f0efff;
+        color: var(--primary-dark);
+        font-weight: 800;
+      }
+
+      .primary-button,
+      .download-link {
+        display: flex;
+        width: 100%;
+        min-height: 49px;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        border: 0;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 800;
+        text-decoration: none;
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s,
+          opacity 0.2s;
+      }
+
+      .primary-button {
+        color: white;
+        background: linear-gradient(110deg, #5145e5, #8b5cf6 55%, #d946ef);
+        box-shadow: 0 8px 20px rgba(99, 91, 255, 0.24);
+      }
+
+      .primary-button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 25px rgba(99, 91, 255, 0.32);
+      }
+
+      .primary-button:disabled {
+        opacity: 0.65;
+        cursor: wait;
+      }
+
+      .download-link {
+        margin-top: 14px;
+        color: white;
+        background: linear-gradient(110deg, #059669, #10b981);
+        box-shadow: 0 7px 18px rgba(5, 150, 105, 0.2);
+      }
+
+      .download-link:hover {
+        transform: translateY(-1px);
+      }
+
+      .message {
+        display: none;
+        margin: 18px 0;
+        padding: 14px 16px;
+        border-radius: 11px;
+        font-size: 13px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+      }
+
+      .message.error {
+        display: block;
+        color: #a61b1b;
+        border: 1px solid #fecaca;
+        background: #fff1f2;
+      }
+
+      .message.success {
+        display: block;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+        background: #f0fdf4;
+      }
+
+      .result-card {
+        padding: 22px;
+        border: 1px solid #a7f3d0;
+        border-radius: 17px;
+        background: linear-gradient(140deg, #f0fdf4, #f0fdfa);
+      }
+
+      .result-card h2 {
+        margin: 0 0 15px;
+        font-size: 19px;
+        color: #166534;
+      }
+
+      .result-card video {
+        display: block;
+        width: 100%;
+        max-height: 560px;
+        margin: 0 auto;
+        border-radius: 12px;
+        background: #101323;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .footer {
+        padding: 0 20px 25px;
+        color: #8993a8;
+        text-align: center;
+        font-size: 11px;
+      }
+
+      @media (max-width: 600px) {
+        body {
+          padding: 12px 8px;
+        }
+        .hero {
+          padding: 30px 18px;
+        }
+        .content {
+          padding: 15px;
+        }
+        .section {
+          padding: 15px;
+        }
+        .settings {
+          grid-template-columns: 1fr;
+          gap: 0;
+        }
+        .ratio-grid {
+          gap: 6px;
+        }
+        .ratio-option label {
+          min-height: 83px;
+        }
+        .ratio-description {
+          font-size: 9px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <header class="hero">
+        <div class="hero-content">
+          <div class="eyebrow">Creator Studio</div>
+          <h1>Video to Shorts & Reels</h1>
+          <p class="subtitle">
+            Turn your videos into social-ready clips. Choose your aspect ratio,
+            drag the crop frame to position your shot, and export an MP4.
+          </p>
+        </div>
+      </header>
+
+      <div class="content">
+        <form id="convertForm">
+          <section class="section">
+            <h2 class="section-title">
+              <span class="step">1</span> Upload your video
+            </h2>
+            <div class="upload-box">
+              <div class="field">
+                <label for="video">Choose a video file</label>
+                <input
+                  type="file"
+                  id="video"
+                  name="video"
+                  accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm,video/mpeg,.m4v"
+                  required
+                />
+                <p class="note">
+                  MP4, MOV, AVI, MKV, WEBM, MPEG or M4V · Maximum file size 500
+                  MB
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section id="previewSection" class="section hidden">
+            <h2 class="section-title">
+              <span class="step">2</span> Position your crop
+            </h2>
+            <div class="video-stage" id="videoStage">
+              <video id="sourcePreview" controls preload="metadata"></video>
+              <div class="crop-overlay" id="cropOverlay">
+                <div class="crop-frame" id="cropFrame">
+                  <span class="crop-tag" id="cropTag">9:16 crop</span>
+                </div>
+              </div>
+            </div>
+            <div class="crop-help">
+              <strong>Drag the frame</strong>
+              <span
+                >Move the highlighted area to choose exactly what appears in
+                your final video.</span
+              >
+            </div>
+            <p class="note">
+              The crop frame is applied to the exported video. Everything
+              outside the frame is removed.
+            </p>
+          </section>
+
+          <section class="section">
+            <h2 class="section-title">
+              <span class="step">3</span> Choose your format
+            </h2>
+
+            <div class="field">
+              <label>Aspect ratio</label>
+              <div class="ratio-grid">
+                <div class="ratio-option">
+                  <input
+                    type="radio"
+                    name="aspect_ratio"
+                    id="ratio916"
+                    value="9:16"
+                    checked
+                  />
+                  <label for="ratio916">
+                    <span class="ratio-shape"></span>
+                    <span class="ratio-name">9:16</span>
+                    <span class="ratio-description">Shorts / Reels</span>
+                  </label>
+                </div>
+                <div class="ratio-option">
+                  <input
+                    type="radio"
+                    name="aspect_ratio"
+                    id="ratio45"
+                    value="4:5"
+                  />
+                  <label for="ratio45">
+                    <span class="ratio-shape ratio-45"></span>
+                    <span class="ratio-name">4:5</span>
+                    <span class="ratio-description">Portrait feed</span>
+                  </label>
+                </div>
+                <div class="ratio-option">
+                  <input
+                    type="radio"
+                    name="aspect_ratio"
+                    id="ratio11"
+                    value="1:1"
+                  />
+                  <label for="ratio11">
+                    <span class="ratio-shape ratio-11"></span>
+                    <span class="ratio-name">1:1</span>
+                    <span class="ratio-description">Square</span>
+                  </label>
+                </div>
+                <div class="ratio-option">
+                  <input
+                    type="radio"
+                    name="aspect_ratio"
+                    id="ratio169"
+                    value="16:9"
+                  />
+                  <label for="ratio169">
+                    <span class="ratio-shape ratio-169"></span>
+                    <span class="ratio-name">16:9</span>
+                    <span class="ratio-description">Landscape</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings">
+              <div class="field">
+                <label for="platform">Target platform</label>
+                <select id="platform" name="platform">
+                  <option value="youtube">YouTube Shorts</option>
+                  <option value="instagram">Instagram Reels</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="resolution">Output resolution</label>
+                <select id="resolution" name="resolution">
+                  <option value="1080">1080 — High quality</option>
+                  <option value="720">720 — Smaller file</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section class="section">
+            <h2 class="section-title">
+              <span class="step">4</span> Select the clip
+            </h2>
+
+            <div class="field">
+              <label for="startSlider">
+                Start position
+                <span class="start-value" id="startLabel">0:00</span>
+              </label>
+              <input
+                type="range"
+                id="startSlider"
+                min="0"
+                max="0"
+                step="0.1"
+                value="0"
+              />
+              <div class="range-row">
+                <span>Beginning</span>
+                <span id="videoDurationLabel">Video duration: 0:00</span>
+              </div>
+            </div>
+
+            <div class="settings">
+              <div class="field">
+                <label for="startTime">Start time (seconds)</label>
+                <input
+                  type="number"
+                  id="startTime"
+                  name="start_time"
+                  min="0"
+                  step="0.1"
+                  value="0"
+                  required
+                />
+              </div>
+              <div class="field">
+                <label for="duration">Clip duration (seconds)</label>
+                <input
+                  type="number"
+                  id="duration"
+                  name="duration"
+                  min="1"
+                  max="180"
+                  step="0.1"
+                  value="30"
+                  required
+                />
+              </div>
+            </div>
+            <p class="note">
+              Maximum clip duration: 180 seconds. Original audio is preserved
+              when present.
+            </p>
+          </section>
+
+          <input type="hidden" name="crop_x" id="cropX" value="0" />
+          <input type="hidden" name="crop_y" id="cropY" value="0" />
+          <input type="hidden" name="crop_w" id="cropW" value="1" />
+          <input type="hidden" name="crop_h" id="cropH" value="1" />
+
+          <button type="submit" class="primary-button" id="convertButton">
+            <span>✦</span> Create my video
+          </button>
+        </form>
+
+        <div
+          id="message"
+          class="message"
+          role="status"
+          aria-live="polite"
+        ></div>
+
+        <section id="resultSection" class="result-card hidden">
+          <h2>Your video is ready</h2>
+          <video id="resultPreview" controls playsinline></video>
+          <a
+            id="downloadLink"
+            class="download-link"
+            href="#"
+            download="shorts-or-reels.mp4"
+          >
+            ↓ Download MP4
+          </a>
+        </section>
+      </div>
+
+      <footer class="footer">
+        Video to Reels · Your output is downloaded to your browser, not saved
+        permanently by this application.
+      </footer>
+    </main>
+
+    <script>
+      const form = document.getElementById("convertForm");
+      const videoInput = document.getElementById("video");
+      const sourcePreview = document.getElementById("sourcePreview");
+      const previewSection = document.getElementById("previewSection");
+      const videoStage = document.getElementById("videoStage");
+      const cropFrame = document.getElementById("cropFrame");
+      const cropTag = document.getElementById("cropTag");
+      const startSlider = document.getElementById("startSlider");
+      const startTime = document.getElementById("startTime");
+      const durationInput = document.getElementById("duration");
+      const startLabel = document.getElementById("startLabel");
+      const videoDurationLabel = document.getElementById("videoDurationLabel");
+      const convertButton = document.getElementById("convertButton");
+      const message = document.getElementById("message");
+      const resultSection = document.getElementById("resultSection");
+      const resultPreview = document.getElementById("resultPreview");
+      const downloadLink = document.getElementById("downloadLink");
+
+      const cropXInput = document.getElementById("cropX");
+      const cropYInput = document.getElementById("cropY");
+      const cropWInput = document.getElementById("cropW");
+      const cropHInput = document.getElementById("cropH");
+
+      let sourceUrl = null;
+      let resultUrl = null;
+      let videoDuration = 0;
+      let cropRect = { x: 0, y: 0, w: 0, h: 0 };
+      let dragState = null;
+
+      const ratios = {
+        "9:16": 9 / 16,
+        "4:5": 4 / 5,
+        "1:1": 1,
+        "16:9": 16 / 9,
+      };
+
+      function selectedRatio() {
+        return document.querySelector('input[name="aspect_ratio"]:checked')
+          .value;
+      }
+
+      function formatTime(seconds) {
+        if (!Number.isFinite(seconds) || seconds < 0) seconds = 0;
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
+      }
+
+      function showMessage(text, type) {
+        message.textContent = text;
+        message.className = `message ${type}`;
+      }
+
+      function clearMessage() {
+        message.textContent = "";
+        message.className = "message";
+      }
+
+      function setStartTime(value, seekPreview = true) {
+        const maxStart = Math.max(0, videoDuration);
+        const numericValue = Math.min(
+          maxStart,
+          Math.max(0, Number(value) || 0),
+        );
+
+        startTime.value = numericValue;
+        startSlider.value = numericValue;
+        startLabel.textContent = formatTime(numericValue);
+
+        if (seekPreview && videoDuration > 0) {
+          sourcePreview.currentTime = numericValue;
+        }
+      }
+
+      function saveCropCoordinates() {
+        const stageWidth = videoStage.clientWidth;
+        const stageHeight = videoStage.clientHeight;
+
+        if (!stageWidth || !stageHeight || !cropRect.w || !cropRect.h) return;
+
+        cropXInput.value = Math.max(0, cropRect.x / stageWidth).toFixed(8);
+        cropYInput.value = Math.max(0, cropRect.y / stageHeight).toFixed(8);
+        cropWInput.value = Math.min(1, cropRect.w / stageWidth).toFixed(8);
+        cropHInput.value = Math.min(1, cropRect.h / stageHeight).toFixed(8);
+      }
+
+      function renderCropFrame() {
+        cropFrame.style.left = `${cropRect.x}px`;
+        cropFrame.style.top = `${cropRect.y}px`;
+        cropFrame.style.width = `${cropRect.w}px`;
+        cropFrame.style.height = `${cropRect.h}px`;
+        cropTag.textContent = `${selectedRatio()} crop`;
+        saveCropCoordinates();
+      }
+
+      function initializeCropFrame() {
+        const stageWidth = videoStage.clientWidth;
+        const stageHeight = sourcePreview.clientHeight;
+        if (!stageWidth || !stageHeight) return;
+
+        const ratio = ratios[selectedRatio()];
+        let width = stageWidth;
+        let height = width / ratio;
+
+        if (height > stageHeight) {
+          height = stageHeight;
+          width = height * ratio;
+        }
+
+        cropRect.w = width;
+        cropRect.h = height;
+        cropRect.x = (stageWidth - width) / 2;
+        cropRect.y = (stageHeight - height) / 2;
+
+        renderCropFrame();
+      }
+
+      function changeRatio() {
+        initializeCropFrame();
+        clearMessage();
+      }
+
+      document
+        .querySelectorAll('input[name="aspect_ratio"]')
+        .forEach((input) => {
+          input.addEventListener("change", changeRatio);
+        });
+
+      videoInput.addEventListener("change", () => {
+        clearMessage();
+
+        if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+        if (resultUrl) URL.revokeObjectURL(resultUrl);
+
+        sourceUrl = null;
+        resultUrl = null;
+        videoDuration = 0;
+
+        previewSection.classList.add("hidden");
+        resultSection.classList.add("hidden");
+
+        const file = videoInput.files[0];
+        if (!file) return;
+
+        if (file.size > 500 * 1024 * 1024) {
+          videoInput.value = "";
+          showMessage("The selected file exceeds the 500 MB limit.", "error");
+          return;
+        }
+
+        sourceUrl = URL.createObjectURL(file);
+        sourcePreview.src = sourceUrl;
+        previewSection.classList.remove("hidden");
+      });
+
+      sourcePreview.addEventListener("loadedmetadata", () => {
+        videoDuration = Number.isFinite(sourcePreview.duration)
+          ? sourcePreview.duration
+          : 0;
+
+        startSlider.min = 0;
+        startSlider.max = videoDuration;
+        startSlider.value = 0;
+        videoDurationLabel.textContent = `Video duration: ${formatTime(videoDuration)}`;
+        setStartTime(0, false);
+
+        const suggestedDuration = Math.min(30, Math.floor(videoDuration));
+        durationInput.value = suggestedDuration > 0 ? suggestedDuration : 30;
+
+        requestAnimationFrame(initializeCropFrame);
+      });
+
+      sourcePreview.addEventListener("loadeddata", () => {
+        requestAnimationFrame(initializeCropFrame);
+      });
+
+      startSlider.addEventListener("input", () =>
+        setStartTime(startSlider.value),
+      );
+      startTime.addEventListener("input", () => setStartTime(startTime.value));
+
+      let resizeTimeout;
+      window.addEventListener("resize", () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(initializeCropFrame, 100);
+      });
+
+      cropFrame.addEventListener("pointerdown", (event) => {
+        if (event.target === cropTag) {
+          // Dragging the tag moves the crop frame too.
+        }
+
+        event.preventDefault();
+        cropFrame.setPointerCapture(event.pointerId);
+
+        dragState = {
+          pointerX: event.clientX,
+          pointerY: event.clientY,
+          frameX: cropRect.x,
+          frameY: cropRect.y,
+        };
+      });
+
+      cropFrame.addEventListener("pointermove", (event) => {
+        if (!dragState) return;
+
+        const dx = event.clientX - dragState.pointerX;
+        const dy = event.clientY - dragState.pointerY;
+
+        cropRect.x = Math.max(
+          0,
+          Math.min(videoStage.clientWidth - cropRect.w, dragState.frameX + dx),
+        );
+
+        cropRect.y = Math.max(
+          0,
+          Math.min(videoStage.clientHeight - cropRect.h, dragState.frameY + dy),
+        );
+
+        renderCropFrame();
+      });
+
+      function stopDragging() {
+        dragState = null;
+      }
+
+      cropFrame.addEventListener("pointerup", stopDragging);
+      cropFrame.addEventListener("pointercancel", stopDragging);
+      cropFrame.addEventListener("lostpointercapture", stopDragging);
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearMessage();
+
+        const file = videoInput.files[0];
+        if (!file) {
+          showMessage("Please select a video.", "error");
+          return;
+        }
+
+        const start = Number(startTime.value);
+        const duration = Number(durationInput.value);
+
+        if (!Number.isFinite(start) || start < 0) {
+          showMessage("Enter a valid non-negative start time.", "error");
+          return;
+        }
+
+        if (!Number.isFinite(duration) || duration <= 0 || duration > 180) {
+          showMessage(
+            "Duration must be greater than 0 and no more than 180 seconds.",
+            "error",
+          );
+          return;
+        }
+
+        if (videoDuration > 0 && start >= videoDuration) {
+          showMessage(
+            "Start time must be earlier than the end of the video.",
+            "error",
+          );
+          return;
+        }
+
+        if (videoDuration > 0 && start + duration > videoDuration + 0.1) {
+          showMessage(
+            "The selected start time and duration extend beyond the end of the video.",
+            "error",
+          );
+          return;
+        }
+
+        saveCropCoordinates();
+
+        const formData = new FormData(form);
+        convertButton.disabled = true;
+        convertButton.textContent = "Converting your video...";
+        showMessage("Your video is being processed. Please wait.", "success");
+
+        try {
+          const response = await fetch("/video-to-reels/convert", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            let errorText = "Conversion failed.";
+            try {
+              const data = await response.json();
+              errorText = data.error || errorText;
+            } catch (_) {}
+            throw new Error(errorText);
+          }
+
+          const outputBlob = await response.blob();
+          if (!outputBlob.size)
+            throw new Error("The server returned an empty video.");
+
+          if (resultUrl) URL.revokeObjectURL(resultUrl);
+          resultUrl = URL.createObjectURL(outputBlob);
+
+          const platform = document.getElementById("platform").value;
+          downloadLink.download =
+            platform === "instagram"
+              ? "instagram-reel.mp4"
+              : "youtube-short.mp4";
+
+          resultPreview.src = resultUrl;
+          downloadLink.href = resultUrl;
+          resultSection.classList.remove("hidden");
+
+          showMessage(
+            "Conversion complete! Preview your video or download the MP4.",
+            "success",
+          );
+
+          downloadLink.click();
+          resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch (error) {
+          showMessage(
+            error.message || "Conversion failed. Please try another video.",
+            "error",
+          );
+        } finally {
+          convertButton.disabled = false;
+          convertButton.innerHTML = "<span>✦</span> Create my video";
+        }
+      });
+
+      window.addEventListener("beforeunload", () => {
+        if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+        if (resultUrl) URL.revokeObjectURL(resultUrl);
+      });
+    </script>
+  </body>
+</html>

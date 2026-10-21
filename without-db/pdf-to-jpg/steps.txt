@@ -1,0 +1,3 @@
+docker build -t pdf-to-jpg:latest .
+docker run -d --name pdf-to-jpg --network media-tools-network -p 5009:5009 --restart unless-stopped pdf-to-jpg:latest
+docker logs -f pdf-to-jpg

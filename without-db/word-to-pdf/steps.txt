@@ -1,0 +1,3 @@
+docker build -t word-to-pdf:latest .
+docker run -d --name word-to-pdf --network media-tools-network -p 5011:5011 --restart unless-stopped word-to-pdf:latest
+curl.exe http://127.0.0.1:5011/health

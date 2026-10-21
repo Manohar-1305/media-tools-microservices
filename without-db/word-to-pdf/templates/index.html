@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Word to PDF Converter | Media Tools</title>
+
+    <style>
+      :root {
+        --bg: #080d19;
+        --panel: #111c31;
+        --border: #2a3a57;
+        --text: #f4f7ff;
+        --muted: #a0aec8;
+        --purple: #8b78ff;
+        --blue: #5479ff;
+        --green: #37d6a4;
+        --red: #ff7185;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        padding: 26px;
+        background:
+          radial-gradient(ellipse at 15% 10%, #5141a944 0%, transparent 42%),
+          radial-gradient(ellipse at 90% 85%, #1a72a533 0%, transparent 38%),
+          linear-gradient(135deg, #080d19, #0c1426 55%, #10172d);
+        color: var(--text);
+        font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        width: min(100%, 1100px);
+        margin: 0 auto;
+      }
+
+      .brand {
+        font-size: 19px;
+        font-weight: 750;
+        letter-spacing: 0.2px;
+      }
+
+      .brand small {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 400;
+      }
+
+      .home-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 42px;
+        padding: 11px 17px;
+        border: 1px solid #465575;
+        border-radius: 10px;
+        background: #ffffff0b;
+        color: var(--text);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 650;
+        transition:
+          background 0.2s,
+          border-color 0.2s,
+          transform 0.2s;
+      }
+
+      .home-button:hover {
+        border-color: var(--purple);
+        background: #8b78ff20;
+        transform: translateY(-1px);
+      }
+
+      .page {
+        display: grid;
+        place-items: center;
+        min-height: calc(100vh - 105px);
+        padding: 38px 0;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 560px;
+        padding: 36px;
+        border: 1px solid #7183a033;
+        border-radius: 22px;
+        background: linear-gradient(145deg, #17243bdc, #101a2def);
+        box-shadow:
+          0 25px 80px #00000045,
+          inset 0 1px 0 #ffffff0b;
+        backdrop-filter: blur(18px);
+      }
+
+      .icon-box {
+        display: grid;
+        place-items: center;
+        width: 62px;
+        height: 62px;
+        margin-bottom: 23px;
+        border: 1px solid #a99bff40;
+        border-radius: 17px;
+        background: linear-gradient(145deg, #8b78ff2b, #5479ff20);
+        color: #c0b6ff;
+        font-size: 27px;
+        font-weight: 800;
+      }
+
+      .eyebrow {
+        display: inline-block;
+        margin-bottom: 12px;
+        color: #b8acff;
+        font-size: 10px;
+        font-weight: 750;
+        letter-spacing: 1.6px;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: clamp(27px, 5vw, 36px);
+        letter-spacing: -1px;
+        line-height: 1.2;
+      }
+
+      .description {
+        margin: 0 0 28px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.8;
+      }
+
+      .upload-area {
+        display: block;
+        padding: 27px 20px;
+        border: 1px dashed #64769b;
+        border-radius: 14px;
+        background: #080f1e75;
+        text-align: center;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+      }
+
+      .upload-area:hover {
+        border-color: var(--purple);
+        background: #8b78ff0d;
+      }
+
+      .upload-icon {
+        display: block;
+        margin-bottom: 12px;
+        color: #b8acff;
+        font-size: 29px;
+      }
+
+      .upload-title {
+        display: block;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .upload-subtitle {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .upload-area input {
+        display: block;
+        width: 100%;
+        margin-top: 19px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      input[type="file"]::file-selector-button {
+        margin-right: 10px;
+        padding: 8px 11px;
+        border: 1px solid #435574;
+        border-radius: 7px;
+        background: #182742;
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      .file-info {
+        min-height: 20px;
+        margin: 15px 0 18px;
+        color: #b9c6df;
+        font-size: 12px;
+        overflow-wrap: anywhere;
+      }
+
+      .convert-button {
+        width: 100%;
+        min-height: 49px;
+        padding: 14px 18px;
+        border: 0;
+        border-radius: 11px;
+        background: linear-gradient(100deg, var(--purple), var(--blue));
+        color: #fff;
+        font-size: 14px;
+        font-weight: 750;
+        cursor: pointer;
+        box-shadow: 0 8px 24px #6757e533;
+        transition:
+          filter 0.2s,
+          transform 0.2s;
+      }
+
+      .convert-button:hover:not(:disabled) {
+        filter: brightness(1.12);
+        transform: translateY(-1px);
+      }
+
+      .convert-button:disabled {
+        cursor: not-allowed;
+        opacity: 0.65;
+        transform: none;
+      }
+
+      .status {
+        display: none;
+        margin-top: 17px;
+        padding: 13px 14px;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        font-size: 12px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+      }
+
+      .status.visible {
+        display: block;
+      }
+
+      .status.error {
+        border-color: #ff718533;
+        background: #ff718511;
+        color: #ff9cab;
+      }
+
+      .status.success {
+        border-color: #37d6a433;
+        background: #37d6a410;
+        color: #67e5ba;
+      }
+
+      .features {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 26px;
+        padding-top: 22px;
+        border-top: 1px solid #34435d99;
+      }
+
+      .feature {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.6;
+        text-align: center;
+      }
+
+      .feature strong {
+        display: block;
+        margin-bottom: 4px;
+        color: #e4eaff;
+        font-size: 12px;
+      }
+
+      .footer {
+        margin-top: 23px;
+        color: #7585a3;
+        font-size: 10px;
+        text-align: center;
+      }
+
+      @media (max-width: 520px) {
+        body {
+          padding: 18px;
+        }
+
+        .page {
+          min-height: calc(100vh - 85px);
+          padding: 28px 0;
+        }
+
+        .container {
+          padding: 25px 20px;
+          border-radius: 17px;
+        }
+
+        .brand {
+          font-size: 17px;
+        }
+
+        .home-button {
+          min-height: 38px;
+          padding: 9px 12px;
+          font-size: 12px;
+        }
+
+        .features {
+          gap: 6px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        Media Tools
+        <small>Document conversion workspace</small>
+      </div>
+
+      <a class="home-button" href="/" aria-label="Go to home page">
+        <span aria-hidden="true">⌂</span>
+        Home
+      </a>
+    </header>
+
+    <main class="page">
+      <section class="container">
+        <div class="icon-box" aria-hidden="true">W</div>
+
+        <span class="eyebrow">DOCUMENT TOOLS</span>
+        <h1>Word to PDF Converter</h1>
+
+        <p class="description">
+          Turn your Word documents into downloadable PDF files with a simple
+          upload. Select a document to get started.
+        </p>
+
+        <form id="convertForm">
+          <label class="upload-area" for="file">
+            <span class="upload-icon" aria-hidden="true">↑</span>
+            <span class="upload-title">Choose your Word document</span>
+            <div class="upload-subtitle">
+              Select a DOC or DOCX file from your device
+            </div>
+
+            <input
+              id="file"
+              name="file"
+              type="file"
+              accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              required
+            />
+          </label>
+
+          <div class="file-info" id="fileInfo">No file selected.</div>
+
+          <button type="submit" class="convert-button" id="convertButton">
+            Convert to PDF
+          </button>
+
+          <div
+            id="status"
+            class="status"
+            role="status"
+            aria-live="polite"
+          ></div>
+        </form>
+
+        <div class="features">
+          <div class="feature">
+            <strong>25 MB</strong>
+            Maximum file size
+          </div>
+          <div class="feature">
+            <strong>DOC / DOCX</strong>
+            Word formats
+          </div>
+          <div class="feature">
+            <strong>PDF</strong>
+            Downloadable output
+          </div>
+        </div>
+
+        <footer class="footer">Media Tools · Word to PDF</footer>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById("convertForm");
+      const fileInput = document.getElementById("file");
+      const fileInfo = document.getElementById("fileInfo");
+      const convertButton = document.getElementById("convertButton");
+      const statusBox = document.getElementById("status");
+
+      function showStatus(message, type) {
+        statusBox.textContent = message;
+        statusBox.className = `status visible ${type}`;
+      }
+
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+
+        fileInfo.textContent = file
+          ? `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`
+          : "No file selected.";
+
+        statusBox.className = "status";
+
+        if (file && file.size > 25 * 1024 * 1024) {
+          showStatus("The selected file exceeds 25 MB.", "error");
+        }
+      });
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const file = fileInput.files[0];
+
+        if (!file) {
+          showStatus("Please select a Word document.", "error");
+          return;
+        }
+
+        if (file.size > 25 * 1024 * 1024) {
+          showStatus("The selected file exceeds 25 MB.", "error");
+          return;
+        }
+
+        const extension = file.name.split(".").pop().toLowerCase();
+
+        if (!["doc", "docx"].includes(extension)) {
+          showStatus("Only DOC and DOCX files are supported.", "error");
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        convertButton.disabled = true;
+        convertButton.textContent = "Converting...";
+        showStatus("Converting your document. Please wait.", "success");
+
+        try {
+          const response = await fetch("/word-to-pdf/convert", {
+            method: "POST",
+            body: formData,
+            credentials: "same-origin",
+          });
+
+          if (!response.ok) {
+            let message = `Conversion failed (HTTP ${response.status}).`;
+
+            try {
+              const data = await response.json();
+              if (data.error) {
+                message = data.error;
+              }
+            } catch (_) {
+              // Retain the HTTP error if the response is not JSON.
+            }
+
+            throw new Error(message);
+          }
+
+          const contentType = response.headers.get("content-type") || "";
+
+          if (!contentType.toLowerCase().includes("application/pdf")) {
+            throw new Error("The server did not return a PDF file.");
+          }
+
+          const blob = await response.blob();
+
+          if (!blob.size) {
+            throw new Error("The generated PDF is empty.");
+          }
+
+          const downloadUrl = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = downloadUrl;
+          link.download = file.name.replace(/\.(docx?)$/i, "") + ".pdf";
+
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+
+          showStatus(
+            "Conversion successful. Your PDF download has started.",
+            "success",
+          );
+        } catch (error) {
+          showStatus(
+            error.message || "Conversion failed. Please try again.",
+            "error",
+          );
+        } finally {
+          convertButton.disabled = false;
+          convertButton.textContent = "Convert to PDF";
+        }
+      });
+    </script>
+  </body>
+</html>

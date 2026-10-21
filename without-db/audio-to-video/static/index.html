@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio to Video | Media Tools</title>
+
+    <style>
+        :root {
+            --bg: #080d19;
+            --panel: #101a2d;
+            --panel-light: #142138;
+            --border: #263651;
+            --text: #f4f7ff;
+            --muted: #91a2c2;
+            --purple: #7964f4;
+            --purple-light: #9a8aff;
+            --green: #37d6a4;
+            --red: #ff6b81;
+            --cyan: #66d9ff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background:
+                radial-gradient(ellipse at top, #15203a 0%, transparent 50%),
+                var(--bg);
+            color: var(--text);
+            font-family: Inter, "Segoe UI", Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .page {
+            width: min(100% - 32px, 980px);
+            margin: 0 auto;
+            padding: 28px 0 48px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 42px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            font-size: 16px;
+            font-weight: 750;
+            letter-spacing: -0.3px;
+        }
+
+        .brand-icon {
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--purple-light), var(--purple));
+            color: white;
+            font-size: 19px;
+            box-shadow: 0 5px 20px #7964f433;
+        }
+
+        .brand small {
+            display: block;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 0;
+        }
+
+        .back-link {
+            color: #c2cbea;
+            text-decoration: none;
+            font-size: 12px;
+        }
+
+        .back-link:hover {
+            color: white;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .eyebrow {
+            display: inline-block;
+            padding: 5px 10px;
+            margin-bottom: 13px;
+            border: 1px solid #7964f455;
+            border-radius: 999px;
+            background: #7964f414;
+            color: #b6aaff;
+            font-size: 11px;
+            font-weight: 650;
+            letter-spacing: 0.5px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(28px, 5vw, 43px);
+            line-height: 1.15;
+            letter-spacing: -1.6px;
+        }
+
+        .hero p {
+            max-width: 490px;
+            margin: 13px auto 0;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: minmax(0, 1.55fr) minmax(230px, 0.8fr);
+            gap: 18px;
+            align-items: start;
+        }
+
+        .card {
+            min-width: 0;
+            padding: 23px;
+            border: 1px solid var(--border);
+            border-radius: 17px;
+            background: linear-gradient(155deg, #121e33, #0e1728);
+            box-shadow: 0 15px 40px #00000016;
+        }
+
+        .card h2 {
+            margin: 0;
+            font-size: 15px;
+            letter-spacing: -0.2px;
+        }
+
+        .card-description {
+            margin: 5px 0 22px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        .field-label {
+            display: block;
+            margin-bottom: 9px;
+            color: #e2e9fa;
+            font-size: 12px;
+            font-weight: 650;
+        }
+
+        .upload-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            min-height: 93px;
+            padding: 16px;
+            border: 1px dashed #435477;
+            border-radius: 12px;
+            background: #0a1323;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .upload-box:hover {
+            border-color: var(--purple-light);
+            background: #111a30;
+        }
+
+        .upload-icon {
+            display: grid;
+            place-items: center;
+            flex: 0 0 42px;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: #7964f422;
+            color: #b5a8ff;
+            font-size: 21px;
+        }
+
+        .upload-copy {
+            min-width: 0;
+            pointer-events: none;
+        }
+
+        .upload-copy strong {
+            display: block;
+            overflow-wrap: anywhere;
+            font-size: 12px;
+        }
+
+        .upload-copy span {
+            display: block;
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .upload-box input[type="file"] {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-box.has-file {
+            border-color: #37d6a477;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .select-control {
+            width: 100%;
+            min-height: 43px;
+            padding: 0 12px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            outline: none;
+            background: #0a1323;
+            color: var(--text);
+        }
+
+        .select-control:focus {
+            border-color: var(--purple-light);
+        }
+
+        .hint {
+            margin-top: 7px;
+            color: var(--muted);
+            font-size: 10px;
+        }
+
+        .image-upload-area {
+            display: none;
+            margin-top: 12px;
+        }
+
+        .image-upload-area.visible {
+            display: block;
+        }
+
+        .primary-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            width: 100%;
+            min-height: 46px;
+            padding: 12px 18px;
+            border: 0;
+            border-radius: 10px;
+            background: linear-gradient(100deg, #8d7aff, #7058ed);
+            color: white;
+            font-size: 12px;
+            font-weight: 750;
+            box-shadow: 0 6px 20px #7964f42c;
+            transition: transform 0.2s, filter 0.2s;
+        }
+
+        .primary-button:hover:not(:disabled) {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        .primary-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+
+        .privacy-note {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin: 12px 0 0;
+            color: var(--muted);
+            font-size: 10px;
+        }
+
+        .side-card {
+            margin-bottom: 15px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            background: #101a2dba;
+        }
+
+        .side-card h3 {
+            margin: 0 0 15px;
+            font-size: 13px;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 11px;
+            margin-bottom: 17px;
+        }
+
+        .step:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-number {
+            display: grid;
+            place-items: center;
+            flex: 0 0 26px;
+            width: 26px;
+            height: 26px;
+            border: 1px solid #7964f455;
+            border-radius: 8px;
+            background: #7964f41b;
+            color: #b5a8ff;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .step strong {
+            display: block;
+            font-size: 11px;
+        }
+
+        .step span {
+            display: block;
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 10px;
+        }
+
+        .format-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+        }
+
+        .format {
+            padding: 5px 8px;
+            border: 1px solid #34445f;
+            border-radius: 6px;
+            background: #0b1424;
+            color: #bdc9e2;
+            font-size: 10px;
+        }
+
+        .progress-card {
+            display: none;
+            margin-top: 18px;
+            padding: 21px;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            background: linear-gradient(155deg, #121e33, #0e1728);
+        }
+
+        .progress-card.visible {
+            display: block;
+        }
+
+        .progress-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .progress-heading h2 {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .state-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 9px;
+            border: 1px solid #435477;
+            border-radius: 999px;
+            background: #0a1323;
+            color: #c6d2eb;
+            font-size: 9px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .state-pill.processing {
+            border-color: #7964f466;
+            background: #7964f41b;
+            color: #b8acff;
+        }
+
+        .state-pill.success {
+            border-color: #37d6a455;
+            background: #37d6a414;
+            color: var(--green);
+        }
+
+        .state-pill.error {
+            border-color: #ff6b8155;
+            background: #ff6b8114;
+            color: var(--red);
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 7px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #263550;
+        }
+
+        .progress-fill {
+            width: 0;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--purple), var(--cyan));
+            transition: width 0.3s ease;
+        }
+
+        .progress-message {
+            margin: 10px 0 14px;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .progress-message.success {
+            color: var(--green);
+        }
+
+        .progress-message.error {
+            color: var(--red);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 9px;
+            margin-top: 15px;
+        }
+
+        .stat {
+            min-width: 0;
+            padding: 11px;
+            border: 1px solid #2b3a55;
+            border-radius: 9px;
+            background: #0b1424;
+        }
+
+        .stat-label {
+            display: block;
+            color: var(--muted);
+            font-size: 9px;
+        }
+
+        .stat-value {
+            display: block;
+            margin-top: 4px;
+            overflow-wrap: anywhere;
+            font-size: 12px;
+            font-weight: 750;
+        }
+
+        /* Corrected download section: compact icon and full-width button. */
+        .download-panel {
+            display: none;
+            margin-top: 16px;
+            padding: 18px;
+            border: 1px solid #37d6a455;
+            border-radius: 12px;
+            background: linear-gradient(145deg, #102c30, #10212e);
+        }
+
+        .download-panel.visible {
+            display: block;
+        }
+
+        .download-content {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            margin-bottom: 16px;
+        }
+
+        .download-icon {
+            display: grid;
+            place-items: center;
+            flex: 0 0 44px;
+            width: 44px;
+            height: 44px;
+            border: 1px solid #37d6a444;
+            border-radius: 12px;
+            background: #37d6a41b;
+            color: var(--green);
+        }
+
+        .download-icon svg {
+            display: block;
+            width: 23px;
+            height: 23px;
+        }
+
+        .download-copy {
+            min-width: 0;
+        }
+
+        .download-copy strong {
+            display: block;
+            font-size: 13px;
+        }
+
+        .download-copy span {
+            display: block;
+            margin-top: 3px;
+            color: #a9c9c7;
+            font-size: 11px;
+        }
+
+        .download-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            width: 100%;
+            min-height: 43px;
+            padding: 11px 16px;
+            border: 1px solid #37d6a477;
+            border-radius: 9px;
+            background: var(--green);
+            color: #06241d;
+            text-align: center;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 800;
+            transition: filter 0.2s, transform 0.2s;
+        }
+
+        .download-button:hover {
+            filter: brightness(1.07);
+            transform: translateY(-1px);
+        }
+
+        .download-button svg {
+            width: 17px;
+            height: 17px;
+            flex: 0 0 17px;
+        }
+
+        .footer {
+            margin-top: 35px;
+            color: #647592;
+            text-align: center;
+            font-size: 10px;
+        }
+
+        @media (max-width: 720px) {
+            .page {
+                width: min(100% - 24px, 520px);
+                padding-top: 20px;
+            }
+
+            .topbar {
+                margin-bottom: 32px;
+            }
+
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+
+            .side-column {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+
+            .side-card {
+                margin-bottom: 0;
+            }
+        }
+
+        @media (max-width: 460px) {
+            .card {
+                padding: 17px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .side-column {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                gap: 6px;
+            }
+
+            .stat {
+                padding: 9px 7px;
+            }
+
+            .stat-value {
+                font-size: 11px;
+            }
+
+            .progress-card {
+                padding: 15px;
+            }
+
+            .download-panel {
+                padding: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="page">
+        <header class="topbar">
+            <div class="brand">
+                <div class="brand-icon" aria-hidden="true">♫</div>
+                <div>
+                    Media Tools
+                    <small>Audio to Video Converter</small>
+                </div>
+            </div>
+            <a class="back-link" href="/">← Dashboard</a>
+        </header>
+
+        <section class="hero">
+            <span class="eyebrow">AUDIO CONVERSION STUDIO</span>
+            <h1>Bring your audio to life.</h1>
+            <p>Turn your audio into an MP4 video with an optional image and a duration that works for you.</p>
+        </section>
+
+        <div class="workspace">
+            <div class="main-column">
+                <section class="card">
+                    <h2>Create your video</h2>
+                    <p class="card-description">Choose your audio and customize your output.</p>
+
+                    <form id="convertForm">
+                        <div class="field">
+                            <label class="field-label" for="audioFile">Audio file</label>
+                            <div class="upload-box" id="audioUploadBox">
+                                <div class="upload-icon" aria-hidden="true">♫</div>
+                                <div class="upload-copy">
+                                    <strong id="audioFileName">Choose an audio file</strong>
+                                    <span>MP3, WAV, AAC, M4A, OGG, FLAC, WMA or OPUS</span>
+                                </div>
+                                <input
+                                    type="file"
+                                    id="audioFile"
+                                    name="audio"
+                                    accept=".mp3,.wav,.aac,.m4a,.ogg,.flac,.wma,.opus,audio/*"
+                                    required
+                                    aria-label="Choose audio file"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="field">
+                                <label class="field-label" for="duration">Video duration</label>
+                                <select class="select-control" id="duration" name="duration">
+                                    <option value="default">Full audio duration</option>
+                                    <option value="1">1 minute</option>
+                                    <option value="5">5 minutes</option>
+                                    <option value="10">10 minutes</option>
+                                    <option value="30">30 minutes</option>
+                                    <option value="60">60 minutes</option>
+                                </select>
+                                <div class="hint">Choose the output duration.</div>
+                            </div>
+
+                            <div class="field">
+                                <label class="field-label" for="imageChoice">Video image</label>
+                                <select class="select-control" id="imageChoice">
+                                    <option value="none">No image</option>
+                                    <option value="upload">Upload an image</option>
+                                </select>
+                                <div class="hint">Add an image to accompany your audio.</div>
+                            </div>
+                        </div>
+
+                        <div class="image-upload-area" id="imageUploadArea">
+                            <div class="field">
+                                <label class="field-label" for="imageFile">Image file</label>
+                                <div class="upload-box" id="imageUploadBox">
+                                    <div class="upload-icon" aria-hidden="true">▧</div>
+                                    <div class="upload-copy">
+                                        <strong id="imageFileName">Choose an image</strong>
+                                        <span>PNG, JPG, JPEG or WEBP</span>
+                                    </div>
+                                    <input
+                                        type="file"
+                                        id="imageFile"
+                                        name="image"
+                                        accept=".png,.jpg,.jpeg,.webp,image/*"
+                                        aria-label="Choose image file"
+                                    >
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="primary-button" id="convertButton">
+                            <span aria-hidden="true">✦</span>
+                            <span>Convert to MP4</span>
+                        </button>
+
+                        <p class="privacy-note">
+                            <span aria-hidden="true">♙</span>
+                            Your files are processed for conversion.
+                        </p>
+                    </form>
+                </section>
+
+                <section class="progress-card" id="progressArea" aria-live="polite">
+                    <div class="progress-heading">
+                        <h2 id="stageTitle">Preparing your video</h2>
+                        <span class="state-pill" id="statePill">Waiting</span>
+                    </div>
+
+                    <div class="progress-track" aria-label="Conversion progress">
+                        <div class="progress-fill" id="progress"></div>
+                    </div>
+
+                    <p class="progress-message" id="status">Preparing your files...</p>
+
+                    <div class="stats">
+                        <div class="stat">
+                            <span class="stat-label">Progress</span>
+                            <span class="stat-value" id="percent">0%</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Elapsed time</span>
+                            <span class="stat-value" id="elapsed">0 sec</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Estimated remaining</span>
+                            <span class="stat-value" id="remaining">Calculating...</span>
+                        </div>
+                    </div>
+
+                    <div class="download-panel" id="downloadArea">
+                        <div class="download-content">
+                            <div class="download-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="1.8"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 3v11"></path>
+                                    <path d="m7 9 5 5 5-5"></path>
+                                    <path d="M5 17v3h14v-3"></path>
+                                </svg>
+                            </div>
+                            <div class="download-copy">
+                                <strong>Your video is ready</strong>
+                                <span>Your MP4 has been converted successfully.</span>
+                            </div>
+                        </div>
+
+                        <a class="download-button" id="downloadLink" href="#" download>
+                            <svg viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2"
+                                 stroke-linecap="round" stroke-linejoin="round"
+                                 aria-hidden="true">
+                                <path d="M12 3v11"></path>
+                                <path d="m7 9 5 5 5-5"></path>
+                                <path d="M5 17v3h14v-3"></path>
+                            </svg>
+                            Download MP4
+                        </a>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="side-column">
+                <section class="side-card">
+                    <h3>How it works</h3>
+
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div>
+                            <strong>Upload your audio</strong>
+                            <span>Select the audio file you want to convert.</span>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div>
+                            <strong>Customize your video</strong>
+                            <span>Set the duration and optionally add an image.</span>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div>
+                            <strong>Convert and download</strong>
+                            <span>Wait for processing, then download your MP4.</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="side-card">
+                    <h3>Supported audio formats</h3>
+                    <div class="format-list">
+                        <span class="format">MP3</span>
+                        <span class="format">WAV</span>
+                        <span class="format">AAC</span>
+                        <span class="format">M4A</span>
+                        <span class="format">OGG</span>
+                        <span class="format">FLAC</span>
+                        <span class="format">WMA</span>
+                        <span class="format">OPUS</span>
+                    </div>
+                </section>
+            </aside>
+        </div>
+
+        <footer class="footer">
+            Media Tools · Audio to Video Converter
+        </footer>
+    </main>
+
+    <script>
+        const SERVICE_URL = "/audio-to-video";
+
+        const convertForm = document.getElementById("convertForm");
+        const audioFileInput = document.getElementById("audioFile");
+        const imageFileInput = document.getElementById("imageFile");
+        const imageChoice = document.getElementById("imageChoice");
+        const imageUploadArea = document.getElementById("imageUploadArea");
+        const convertButton = document.getElementById("convertButton");
+        const progressArea = document.getElementById("progressArea");
+        const progressBar = document.getElementById("progress");
+        const stageTitle = document.getElementById("stageTitle");
+        const statePill = document.getElementById("statePill");
+        const statusElement = document.getElementById("status");
+        const percentElement = document.getElementById("percent");
+        const elapsedElement = document.getElementById("elapsed");
+        const remainingElement = document.getElementById("remaining");
+        const downloadArea = document.getElementById("downloadArea");
+        const downloadLink = document.getElementById("downloadLink");
+
+        let startedAt = null;
+        let pollTimer = null;
+        let uploadFinished = false;
+
+        function formatTime(seconds) {
+            if (!Number.isFinite(seconds) || seconds < 0) {
+                return "Calculating...";
+            }
+
+            seconds = Math.floor(seconds);
+
+            if (seconds < 60) {
+                return `${seconds} sec`;
+            }
+
+            const minutes = Math.floor(seconds / 60);
+            const remainder = seconds % 60;
+
+            if (minutes < 60) {
+                return remainder ? `${minutes}m ${remainder}s` : `${minutes}m`;
+            }
+
+            const hours = Math.floor(minutes / 60);
+            const remainingMinutes = minutes % 60;
+
+            return `${hours}h ${remainingMinutes}m`;
+        }
+
+        function setStatus(message, type = "") {
+            statusElement.textContent = message;
+            statusElement.className = "progress-message";
+
+            if (type) {
+                statusElement.classList.add(type);
+            }
+        }
+
+        function setState(label, type = "") {
+            statePill.textContent = label;
+            statePill.className = "state-pill";
+
+            if (type) {
+                statePill.classList.add(type);
+            }
+        }
+
+        function setProgress(value) {
+            const percentage = Math.max(0, Math.min(100, Number(value) || 0));
+            progressBar.style.width = `${percentage}%`;
+            percentElement.textContent = `${Math.round(percentage)}%`;
+            progressBar.parentElement.setAttribute("aria-valuenow", String(Math.round(percentage)));
+            progressBar.parentElement.setAttribute("role", "progressbar");
+            progressBar.parentElement.setAttribute("aria-valuemin", "0");
+            progressBar.parentElement.setAttribute("aria-valuemax", "100");
+        }
+
+        function updateElapsed() {
+            if (startedAt === null) return;
+            elapsedElement.textContent = formatTime((Date.now() - startedAt) / 1000);
+        }
+
+        function showError(message) {
+            if (pollTimer) {
+                clearTimeout(pollTimer);
+                pollTimer = null;
+            }
+
+            stageTitle.textContent = "Conversion failed";
+            setState("Failed", "error");
+            setStatus(message || "An error occurred during conversion.", "error");
+            convertButton.disabled = false;
+            convertButton.querySelector("span:last-child").textContent = "Try again";
+            remainingElement.textContent = "—";
+        }
+
+        audioFileInput.addEventListener("change", () => {
+            const file = audioFileInput.files[0];
+            document.getElementById("audioFileName").textContent =
+                file ? file.name : "Choose an audio file";
+
+            document.getElementById("audioUploadBox").classList.toggle("has-file", Boolean(file));
+        });
+
+        imageFileInput.addEventListener("change", () => {
+            const file = imageFileInput.files[0];
+            document.getElementById("imageFileName").textContent =
+                file ? file.name : "Choose an image";
+
+            document.getElementById("imageUploadBox").classList.toggle("has-file", Boolean(file));
+        });
+
+        imageChoice.addEventListener("change", () => {
+            const showImageUpload = imageChoice.value === "upload";
+            imageUploadArea.classList.toggle("visible", showImageUpload);
+            imageFileInput.required = showImageUpload;
+
+            if (!showImageUpload) {
+                imageFileInput.value = "";
+                document.getElementById("imageFileName").textContent = "Choose an image";
+                document.getElementById("imageUploadBox").classList.remove("has-file");
+            }
+        });
+
+        async function pollJob(jobId) {
+            try {
+                const response = await fetch(
+                    `${SERVICE_URL}/status/${encodeURIComponent(jobId)}`,
+                    { cache: "no-store" }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Unable to retrieve conversion status.");
+                }
+
+                updateElapsed();
+
+                const state = String(data.status || data.state || "processing").toLowerCase();
+                const rawProgress = data.progress ?? data.percent ?? 0;
+                const progressValue = Number(rawProgress);
+
+                if (Number.isFinite(progressValue)) {
+                    setProgress(progressValue);
+                }
+
+                if (state === "completed" || state === "complete" || state === "success") {
+                    setProgress(100);
+                    stageTitle.textContent = "Your video is ready";
+                    setState("Completed", "success");
+                    setStatus(
+                        data.message || `Conversion complete. Total time: ${elapsedElement.textContent}.`,
+                        "success"
+                    );
+                    remainingElement.textContent = "0 sec";
+
+                    const downloadUrl = data.download_url || `/download/${encodeURIComponent(jobId)}`;
+                    downloadLink.href = downloadUrl.startsWith("http")
+                        ? downloadUrl
+                        : `${SERVICE_URL}${downloadUrl.startsWith("/") ? "" : "/"}${downloadUrl}`;
+
+                    downloadArea.classList.add("visible");
+                    convertButton.disabled = false;
+                    convertButton.querySelector("span:last-child").textContent = "Convert another file";
+                    pollTimer = null;
+                    return;
+                }
+
+                if (state === "failed" || state === "error") {
+                    showError(data.error || data.message || "Conversion failed.");
+                    return;
+                }
+
+                if (state === "queued" || state === "pending") {
+                    stageTitle.textContent = "Waiting to start";
+                    setState("Queued", "processing");
+                    setStatus(data.message || "Your file is waiting for processing.");
+                } else {
+                    stageTitle.textContent = "Converting your audio";
+                    setState("Processing", "processing");
+                    setStatus(data.message || "Your video is being generated.");
+                }
+
+                const progress = Number(data.progress ?? data.percent ?? 0);
+                if (progress > 0 && startedAt !== null) {
+                    const elapsedSeconds = (Date.now() - startedAt) / 1000;
+                    const remainingSeconds = elapsedSeconds * (100 - progress) / progress;
+                    remainingElement.textContent = formatTime(remainingSeconds);
+                } else {
+                    remainingElement.textContent = "Calculating...";
+                }
+
+                pollTimer = setTimeout(() => pollJob(jobId), 1500);
+            } catch (error) {
+                showError(error.message || "Unable to check conversion status.");
+            }
+        }
+
+        convertForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+
+            const audioFile = audioFileInput.files[0];
+
+            if (!audioFile) {
+                audioFileInput.focus();
+                return;
+            }
+
+            if (imageChoice.value === "upload" && !imageFileInput.files[0]) {
+                imageFileInput.focus();
+                return;
+            }
+
+            if (pollTimer) {
+                clearTimeout(pollTimer);
+                pollTimer = null;
+            }
+
+            downloadArea.classList.remove("visible");
+            progressArea.classList.add("visible");
+            progressArea.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+            setProgress(0);
+            stageTitle.textContent = "Uploading your files";
+            setState("Uploading", "processing");
+            setStatus("Uploading your audio file...");
+            elapsedElement.textContent = "0 sec";
+            remainingElement.textContent = "Calculating...";
+
+            convertButton.disabled = true;
+            convertButton.querySelector("span:last-child").textContent = "Uploading...";
+
+            startedAt = Date.now();
+            uploadFinished = false;
+
+            const formData = new FormData();
+            formData.append("audio", audioFile);
+            formData.append("duration", document.getElementById("duration").value);
+
+            if (imageChoice.value === "upload" && imageFileInput.files[0]) {
+                formData.append("image", imageFileInput.files[0]);
+            }
+
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", `${SERVICE_URL}/convert`);
+
+            xhr.upload.addEventListener("progress", (event) => {
+                if (!event.lengthComputable || uploadFinished) return;
+
+                const uploadPercent = Math.round((event.loaded / event.total) * 100);
+                setProgress(uploadPercent);
+                setStatus(`Uploading your files: ${uploadPercent}%`);
+            });
+
+            xhr.upload.addEventListener("load", () => {
+                uploadFinished = true;
+                stageTitle.textContent = "Converting your audio";
+                setState("Processing", "processing");
+                setStatus("Upload complete. Preparing your video...");
+                convertButton.querySelector("span:last-child").textContent = "Converting...";
+            });
+
+            xhr.addEventListener("load", () => {
+                let data;
+
+                try {
+                    data = JSON.parse(xhr.responseText);
+                } catch {
+                    showError("The server returned an invalid response.");
+                    return;
+                }
+
+                if (xhr.status < 200 || xhr.status >= 300) {
+                    showError(data.error || data.message || "Unable to start conversion.");
+                    return;
+                }
+
+                const jobId = data.job_id || data.id;
+
+                if (!jobId) {
+                    if (data.download_url) {
+                        setProgress(100);
+                        stageTitle.textContent = "Your video is ready";
+                        setState("Completed", "success");
+                        setStatus("Conversion complete.", "success");
+                        remainingElement.textContent = "0 sec";
+
+                        downloadLink.href = data.download_url.startsWith("http")
+                            ? data.download_url
+                            : `${SERVICE_URL}${data.download_url.startsWith("/") ? "" : "/"}${data.download_url}`;
+
+                        downloadArea.classList.add("visible");
+                        convertButton.disabled = false;
+                        convertButton.querySelector("span:last-child").textContent = "Convert another file";
+                        return;
+                    }
+
+                    showError(data.error || "The server did not return a job ID.");
+                    return;
+                }
+
+                stageTitle.textContent = "Converting your audio";
+                setState("Processing", "processing");
+                setStatus("Your video is being generated.");
+                pollJob(jobId);
+            });
+
+            xhr.addEventListener("error", () => {
+                showError("Unable to connect to the conversion service.");
+            });
+
+            xhr.addEventListener("abort", () => {
+                showError("The upload was cancelled.");
+            });
+
+            xhr.send(formData);
+        });
+    </script>
+</body>
+</html>

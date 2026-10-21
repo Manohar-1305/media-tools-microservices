@@ -1,0 +1,6 @@
+Flask
+Werkzeug
+Flask
+requests
+PyMySQL
+gunicorn

@@ -1,0 +1,4 @@
+cd ~/website/without-db/audio-joiner
+docker build -t audio-joiner:latest .
+docker rm -f audio-joiner 2>/dev/null || true
+docker run -d --name audio-joiner --network media-tools-network --restart unless-stopped -p 5002:5002 audio-joiner:latest

@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Audio Combiner | Media Tools</title>
+    <link rel="stylesheet" href="/audio-joiner/static/style.css" />
+  </head>
+  <body>
+    <a href="/" class="home-button">⌂ Home</a>
+
+    <main class="editor">
+      <header class="editor-header">
+        <div>
+          <a class="back-link" href="/">← Media Tools</a>
+          <h1>Audio Joiner</h1>
+          <p>Combine multiple audio files into one.</p>
+        </div>
+        <button type="button" id="reset-button" class="reset-button">
+          ↺ Reset
+        </button>
+      </header>
+
+      <section class="upload-section">
+        <label class="upload-button" for="audio-files">
+          <span class="upload-icon">↑</span>
+          <span>
+            <strong>Add audio files</strong>
+            <small>MP3, WAV, OGG, M4A, AAC, FLAC, WMA</small>
+          </span>
+        </label>
+        <input
+          id="audio-files"
+          type="file"
+          accept="audio/*,.mp3,.wav,.aac,.m4a,.ogg,.flac,.wma"
+          multiple
+          hidden
+        />
+      </section>
+
+      <section class="files-section">
+        <div class="section-heading">
+          <h2>Selected audio files</h2>
+          <span id="file-count">0 files</span>
+        </div>
+
+        <ol id="file-list" class="file-list">
+          <li class="empty-state">Add at least two audio files to begin.</li>
+        </ol>
+
+        <div class="file-actions">
+          <button type="button" id="add-more-button" class="control-button">
+            + Add files
+          </button>
+          <button type="button" id="clear-button" class="control-button">
+            Clear all
+          </button>
+        </div>
+      </section>
+
+      <section class="join-controls">
+        <label for="output-format">Output format</label>
+        <select id="output-format">
+          <option value="mp3">MP3</option>
+          <option value="wav">WAV</option>
+          <option value="m4a">M4A</option>
+          <option value="aac">AAC</option>
+          <option value="ogg">OGG</option>
+          <option value="flac">FLAC</option>
+          <option value="wma">WMA</option>
+        </select>
+
+        <button type="button" id="join-button" class="cut-button" disabled>
+          <span>♫</span> Join Audio
+        </button>
+      </section>
+
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+
+      <div id="progress-container" class="progress-container" hidden>
+        <div id="progress-label" class="progress-label">Preparing audio...</div>
+        <div class="progress-track">
+          <div id="progress-bar" class="progress-bar"></div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const fileInput = document.getElementById("audio-files");
+      const fileList = document.getElementById("file-list");
+      const fileCount = document.getElementById("file-count");
+      const addMoreButton = document.getElementById("add-more-button");
+      const clearButton = document.getElementById("clear-button");
+      const resetButton = document.getElementById("reset-button");
+      const joinButton = document.getElementById("join-button");
+      const outputFormat = document.getElementById("output-format");
+      const message = document.getElementById("message");
+      const progressContainer = document.getElementById("progress-container");
+      const progressLabel = document.getElementById("progress-label");
+      const progressBar = document.getElementById("progress-bar");
+
+      let files = [];
+      let joining = false;
+
+      function showMessage(text, type = "") {
+        message.textContent = text;
+        message.className = "message" + (type ? " " + type : "");
+      }
+
+      function updateProgress(percentage, text) {
+        progressContainer.hidden = false;
+        progressBar.style.width = percentage + "%";
+        progressLabel.textContent = text;
+      }
+
+      function renderFiles() {
+        fileList.replaceChildren();
+
+        if (files.length === 0) {
+          const empty = document.createElement("li");
+          empty.className = "empty-state";
+          empty.textContent = "Add at least two audio files to begin.";
+          fileList.appendChild(empty);
+        }
+
+        files.forEach((file, index) => {
+          const item = document.createElement("li");
+          item.className = "file-item";
+
+          const number = document.createElement("span");
+          number.className = "file-number";
+          number.textContent = String(index + 1);
+
+          const details = document.createElement("div");
+          details.className = "file-details";
+
+          const name = document.createElement("strong");
+          name.className = "file-name";
+          name.textContent = file.name;
+          name.title = file.name;
+
+          const size = document.createElement("small");
+          size.textContent = formatSize(file.size);
+
+          details.append(name, size);
+
+          const actions = document.createElement("div");
+          actions.className = "file-item-actions";
+
+          const upButton = document.createElement("button");
+          upButton.type = "button";
+          upButton.textContent = "↑";
+          upButton.title = "Move up";
+          upButton.disabled = index === 0 || joining;
+          upButton.addEventListener("click", () => moveFile(index, -1));
+
+          const downButton = document.createElement("button");
+          downButton.type = "button";
+          downButton.textContent = "↓";
+          downButton.title = "Move down";
+          downButton.disabled = index === files.length - 1 || joining;
+          downButton.addEventListener("click", () => moveFile(index, 1));
+
+          const removeButton = document.createElement("button");
+          removeButton.type = "button";
+          removeButton.textContent = "×";
+          removeButton.title = "Remove file";
+          removeButton.disabled = joining;
+          removeButton.addEventListener("click", () => removeFile(index));
+
+          actions.append(upButton, downButton, removeButton);
+          item.append(number, details, actions);
+          fileList.appendChild(item);
+        });
+
+        fileCount.textContent =
+          files.length + (files.length === 1 ? " file" : " files");
+
+        joinButton.disabled = files.length < 2 || joining;
+        addMoreButton.disabled = joining;
+        clearButton.disabled = joining;
+        resetButton.disabled = joining;
+        outputFormat.disabled = joining;
+      }
+
+      function formatSize(bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+        return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+      }
+
+      function moveFile(index, direction) {
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= files.length) return;
+
+        [files[index], files[newIndex]] = [files[newIndex], files[index]];
+        renderFiles();
+      }
+
+      function removeFile(index) {
+        files.splice(index, 1);
+        renderFiles();
+      }
+
+      function addSelectedFiles(selectedFiles) {
+        const allowedExtensions = [
+          ".mp3",
+          ".wav",
+          ".aac",
+          ".m4a",
+          ".ogg",
+          ".flac",
+          ".wma",
+        ];
+
+        let rejected = 0;
+
+        for (const file of selectedFiles) {
+          const extension = file.name
+            .slice(file.name.lastIndexOf("."))
+            .toLowerCase();
+
+          if (!allowedExtensions.includes(extension)) {
+            rejected++;
+            continue;
+          }
+
+          files.push(file);
+        }
+
+        renderFiles();
+
+        if (rejected) {
+          showMessage("Unsupported files were skipped.", "error");
+        } else if (selectedFiles.length) {
+          showMessage("Audio files added.", "success");
+        }
+      }
+
+      fileInput.addEventListener("change", () => {
+        addSelectedFiles(Array.from(fileInput.files));
+        fileInput.value = "";
+      });
+
+      addMoreButton.addEventListener("click", () => fileInput.click());
+
+      clearButton.addEventListener("click", () => {
+        if (joining) return;
+        files = [];
+        renderFiles();
+        progressContainer.hidden = true;
+        showMessage("");
+      });
+
+      resetButton.addEventListener("click", () => {
+        if (joining) return;
+        files = [];
+        fileInput.value = "";
+        outputFormat.value = "mp3";
+        progressContainer.hidden = true;
+        progressBar.style.width = "0%";
+        renderFiles();
+        showMessage("");
+      });
+
+      joinButton.addEventListener("click", async () => {
+        if (joining || files.length < 2) return;
+
+        joining = true;
+        renderFiles();
+
+        const formData = new FormData();
+        files.forEach((file) => formData.append("files", file, file.name));
+        formData.append("format", outputFormat.value);
+
+        progressBar.style.width = "0%";
+        updateProgress(0, "Uploading audio files...");
+        showMessage("Joining audio files...");
+
+        try {
+          const blob = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+
+            xhr.open("POST", "/audio-joiner/join", true);
+            xhr.responseType = "blob";
+
+            xhr.upload.addEventListener("progress", (event) => {
+              if (event.lengthComputable) {
+                const percentage = Math.round(
+                  (event.loaded / event.total) * 100,
+                );
+                updateProgress(
+                  percentage,
+                  "Uploading audio files: " + percentage + "%",
+                );
+              }
+            });
+
+            xhr.upload.addEventListener("load", () => {
+              updateProgress(100, "Processing and joining audio files...");
+            });
+
+            xhr.addEventListener("progress", (event) => {
+              if (event.lengthComputable && event.total > 0) {
+                const percentage = Math.round(
+                  (event.loaded / event.total) * 100,
+                );
+                updateProgress(
+                  percentage,
+                  "Downloading joined audio: " + percentage + "%",
+                );
+              } else if (event.loaded > 0) {
+                progressLabel.textContent = "Downloading joined audio...";
+              }
+            });
+
+            xhr.addEventListener("load", async () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(xhr.response);
+                return;
+              }
+
+              let errorMessage = "Unable to join audio files.";
+
+              try {
+                const errorText = await xhr.response.text();
+                const result = JSON.parse(errorText);
+                errorMessage = result.error || errorMessage;
+              } catch (_) {}
+
+              reject(new Error(errorMessage));
+            });
+
+            xhr.addEventListener("error", () => {
+              reject(new Error("Unable to connect to the audio service."));
+            });
+
+            xhr.send(formData);
+          });
+
+          updateProgress(100, "Download complete: 100%");
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "joined_audio." + outputFormat.value;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          showMessage(
+            "Audio joined successfully. Download started.",
+            "success",
+          );
+        } catch (error) {
+          progressLabel.textContent = "Joining failed.";
+          showMessage(error.message, "error");
+        } finally {
+          joining = false;
+          renderFiles();
+        }
+      });
+
+      renderFiles();
+    </script>
+  </body>
+</html>

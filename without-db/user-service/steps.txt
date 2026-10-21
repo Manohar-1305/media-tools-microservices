@@ -1,0 +1,16 @@
+cd ~/website/without-db/user && docker build -t user:latest . && (docker rm -f user 2>/dev/null || true) && docker run -d --name user --network media-tools-network --restart unless-stopped -p 5006:5006 user:latest
+
+# Database
+docker volume create media-mysql-data && docker run -d --name media-mysql --network media-tools-network --restart unless-stopped -p 127.0.0.1:3307:3306 -e MYSQL_ROOT_PASSWORD='CHANGE_ROOT_PASSWORD' -e MYSQL_DATABASE='media_tools' -e MYSQL_USER='media_user' -e MYSQL_PASSWORD='CHANGE_THIS_PASSWORD' -v media-mysql-data:/var/lib/mysql mysql:8.4
+
+# Credentials
+Username: media_user
+Password: CHANGE_THIS_PASSWORD
+Database: media_tools
+Container hostname: media-mysql
+Port: 3306
+DN: media_tools (database name, if you mean the database/schema name)
+Root password: CHANGE_ROOT_PASSWORD
+
+
+for c in media-tools-gateway audio-cutter audio-joiner audio-to-video video-cutter user media-mysql; do echo "===== $c ====="; docker inspect -f 'Status={{.State.Status}} Network={{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}' "$c" 2>/dev/null || echo "MISSING"; docker logs --tail 15 "$c" 2>&1; done; docker network inspect media-tools-network

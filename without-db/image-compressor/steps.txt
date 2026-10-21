@@ -1,0 +1,9 @@
+docker build -t image-compressor:latest .
+
+docker run -d --name image-compressor --network media-tools-network -p 5013:5013 --restart unless-stopped image-compressor:latest
+
+docker ps
+
+docker logs --tail 50 image-compressor
+
+curl http://localhost:5013/health

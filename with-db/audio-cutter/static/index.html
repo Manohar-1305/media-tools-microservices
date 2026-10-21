@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Audio Cutter | Media Tools</title>
+    <link rel="stylesheet" href="/audio-cutter/static/style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <a href="/">← Media Tools</a>
+      <h1>Audio Cutter</h1>
+      <p>Upload an audio file and select the section to keep.</p>
+
+      <form id="cut-form">
+        <label for="file">Audio file</label>
+        <input
+          id="file"
+          name="file"
+          type="file"
+          accept=".mp3,.wav,.aac,.m4a,.ogg,.flac,.wma"
+          required
+        />
+
+        <label for="start">Start time (seconds)</label>
+        <input
+          id="start"
+          name="start"
+          type="number"
+          min="0"
+          step="0.01"
+          value="0"
+          required
+        />
+
+        <label for="end">End time (seconds)</label>
+        <input
+          id="end"
+          name="end"
+          type="number"
+          min="0.01"
+          step="0.01"
+          required
+        />
+
+        <button id="submit-button" type="submit">Cut Audio</button>
+      </form>
+
+      <p id="message" role="status"></p>
+    </main>
+
+    <script>
+      const form = document.getElementById("cut-form");
+      const message = document.getElementById("message");
+      const button = document.getElementById("submit-button");
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const start = Number(form.start.value);
+        const end = Number(form.end.value);
+
+        if (end <= start) {
+          message.textContent = "End time must be greater than start time.";
+          return;
+        }
+
+        button.disabled = true;
+        message.textContent = "Processing audio...";
+
+        try {
+          const response = await fetch("/audio-cutter/cut", {
+            method: "POST",
+            body: new FormData(form),
+          });
+
+          if (!response.ok) {
+            const result = await response.json();
+            throw new Error(result.error || "Audio cutting failed.");
+          }
+
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+
+          link.href = url;
+          link.download = "audio_cut";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          URL.revokeObjectURL(url);
+          message.textContent = "Audio cut successfully.";
+        } catch (error) {
+          message.textContent = error.message || "Unable to process audio.";
+        } finally {
+          button.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

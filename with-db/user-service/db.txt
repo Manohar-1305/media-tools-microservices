@@ -1,0 +1,46 @@
+sudo dnf install -y mysql-server
+sudo systemctl enable --now mysqld
+sudo mysql
+
+CREATE DATABASE media_tools;
+CREATE USER 'media_user'@'localhost' IDENTIFIED BY 'CHANGE_THIS_PASSWORD';
+GRANT ALL PRIVILEGES ON media_tools.* TO 'media_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+
+# Create volume and network
+docker volume create media-mysql-data
+docker network create media-network
+
+# Run MySQL container
+docker run -d \
+  --name media-mysql \
+  --network media-network \
+  --restart unless-stopped \
+  -p 127.0.0.1:3307:3306 \
+  -e MYSQL_ROOT_PASSWORD='CHANGE_ROOT_PASSWORD' \
+  -e MYSQL_DATABASE='media_tools' \
+  -e MYSQL_USER='media_user' \
+  -e MYSQL_PASSWORD='CHANGE_THIS_PASSWORD' \
+  -v media-mysql-data:/var/lib/mysql \
+  mysql:8.4
+
+# Check container
+docker ps --filter name=media-mysql
+
+# Install Python MySQL driver in the user-service environment
+pip install PyMySQL
+
+Server MySQL:
+- Username: media_user
+- Password: CHANGE_THIS_PASSWORD
+- Database: media_tools
+- Host: 127.0.0.1
+- Port: 3306
+Container MySQL:
+- Username: media_user
+- Password: CHANGE_THIS_PASSWORD
+- Database: media_tools
+- Host: media-mysql
+- Port: 3306
+Container root password: CHANGE_ROOT_PASSWORD
