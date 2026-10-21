@@ -1,34 +1,50 @@
 import os
-import sqlite3
 from pathlib import Path
+
+import pymysql
+from pymysql.cursors import DictCursor
 
 from flask import Flask, jsonify, request, send_from_directory
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from config import Config
+
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
-DATABASE = BASE_DIR / "users.db"
 
 app = Flask(__name__, static_folder=None)
+app.config.from_object(Config)
 
 
 def get_db():
-    connection = sqlite3.connect(DATABASE)
-    connection.row_factory = sqlite3.Row
-    return connection
+    return pymysql.connect(
+        host=app.config["DB_HOST"],
+        port=app.config["DB_PORT"],
+        user=app.config["DB_USER"],
+        password=app.config["DB_PASSWORD"],
+        database=app.config["DB_NAME"],
+        cursorclass=DictCursor,
+        autocommit=False,
+    )
 
 
 def initialize_database():
-    with get_db() as connection:
-        connection.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NOT NULL UNIQUE,
-                email TEXT NOT NULL UNIQUE,
-                password_hash TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
+    connection = get_db()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    username VARCHAR(255) NOT NULL UNIQUE,
+                    email VARCHAR(255) NOT NULL UNIQUE,
+                    password_hash VARCHAR(255) NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+        connection.commit()
+    finally:
+        connection.close()
 
 
 initialize_database()
@@ -64,18 +80,23 @@ def register():
         return jsonify(error="Password must contain at least 8 characters"), 400
 
     password_hash = generate_password_hash(password)
+    connection = get_db()
 
     try:
-        with get_db() as connection:
-            connection.execute(
+        with connection.cursor() as cursor:
+            cursor.execute(
                 """
                 INSERT INTO users (username, email, password_hash)
-                VALUES (?, ?, ?)
+                VALUES (%s, %s, %s)
                 """,
                 (username, email, password_hash),
             )
-    except sqlite3.IntegrityError:
+        connection.commit()
+    except pymysql.err.IntegrityError:
+        connection.rollback()
         return jsonify(error="Username or email already exists"), 409
+    finally:
+        connection.close()
 
     return jsonify(message="Account created successfully"), 201
 
@@ -92,15 +113,21 @@ def login():
     if not username_or_email or not password:
         return jsonify(error="Username/email and password are required"), 400
 
-    with get_db() as connection:
-        user = connection.execute(
-            """
-            SELECT id, username, email, password_hash
-            FROM users
-            WHERE lower(username) = ? OR lower(email) = ?
-            """,
-            (username_or_email, username_or_email),
-        ).fetchone()
+    connection = get_db()
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, username, email, password_hash
+                FROM users
+                WHERE LOWER(username) = %s OR LOWER(email) = %s
+                """,
+                (username_or_email, username_or_email),
+            )
+            user = cursor.fetchone()
+    finally:
+        connection.close()
 
     if user is None or not check_password_hash(user["password_hash"], password):
         return jsonify(error="Invalid username/email or password"), 401
