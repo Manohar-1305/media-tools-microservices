@@ -15,6 +15,8 @@ docker run -d --name user --network media-tools-network --restart unless-stopped
   -p 5006:5006 user:latest
 
 docker logs -f user
+
+grep -n -A100 -B10 'change-password-form' static/index.html
 ===========
 # Credentials
 Username: media_user
