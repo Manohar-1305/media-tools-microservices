@@ -5,6 +5,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Account | Media Tools</title>
     <link rel="stylesheet" href="/user/static/style.css">
+    <style>
+        .account-card {
+            border: 1px solid #e5eaf2;
+            border-radius: 18px;
+            box-shadow: 0 16px 45px rgba(20, 40, 80, 0.09);
+        }
+
+        .account-card h1 {
+            letter-spacing: -0.7px;
+        }
+
+        .account-card input {
+            box-sizing: border-box;
+            width: 100%;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .account-card input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, .13);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tabs button,
+        .submit-button {
+            border-radius: 9px;
+            transition: transform .15s, background .15s;
+        }
+
+        .tabs button:hover,
+        .submit-button:hover {
+            transform: translateY(-1px);
+        }
+
+        .account-links {
+            margin-top: 16px;
+            text-align: right;
+        }
+
+        .account-links a {
+            color: #2563eb;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .account-links a:hover {
+            text-decoration: underline;
+        }
+
+        .dashboard-panel {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #e5eaf2;
+        }
+
+        .dashboard-panel h2 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        #logout-button {
+            margin-top: 12px;
+        }
+
+        [hidden] {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
     <main class="account-container">
@@ -14,7 +87,7 @@
             <h1 id="page-title">Create Account</h1>
             <p id="page-description">Create an account to get started.</p>
 
-            <div class="tabs">
+            <div class="tabs" id="account-tabs">
                 <button id="register-tab" type="button" onclick="showMode('register')">
                     Create Account
                 </button>
@@ -48,23 +121,58 @@
                 <input id="login-password" name="password" type="password"
                        autocomplete="current-password" required>
 
+                <div class="account-links">
+                    <a href="/user/forgot-password">Forgot password?</a>
+                </div>
+
                 <button class="submit-button" type="submit">Login</button>
             </form>
 
-            <p id="message" role="status"></p>
+            <section id="dashboard-panel" class="dashboard-panel" hidden>
+                <h2>Change Password</h2>
+                <p>Update your account password.</p>
+
+                <form id="change-password-form">
+                    <label for="current-password">Current or Temporary Password</label>
+                    <input id="current-password" name="current_password"
+                           type="password" autocomplete="current-password" required>
+
+                    <label for="new-password">New Password</label>
+                    <input id="new-password" name="new_password"
+                           type="password" autocomplete="new-password"
+                           minlength="8" required>
+
+                    <button class="submit-button" type="submit">Change Password</button>
+                </form>
+
+                <button id="logout-button" class="submit-button" type="button">
+                    Log Out
+                </button>
+            </section>
+
+            <p id="message" role="status" aria-live="polite"></p>
         </section>
     </main>
 
     <script>
         const registerForm = document.getElementById("register-form");
         const loginForm = document.getElementById("login-form");
+        const changePasswordForm = document.getElementById("change-password-form");
+        const dashboardPanel = document.getElementById("dashboard-panel");
         const message = document.getElementById("message");
+
+        function showMessage(text, type = "") {
+            message.textContent = text;
+            message.className = type;
+        }
 
         function showMode(mode) {
             const isLogin = mode === "login";
 
             registerForm.hidden = isLogin;
             loginForm.hidden = !isLogin;
+            dashboardPanel.hidden = true;
+            document.getElementById("account-tabs").hidden = false;
 
             document.getElementById("page-title").textContent =
                 isLogin ? "Login" : "Create Account";
@@ -77,8 +185,7 @@
             document.getElementById("register-tab").classList.toggle("active", !isLogin);
             document.getElementById("login-tab").classList.toggle("active", isLogin);
 
-            message.textContent = "";
-            message.className = "";
+            showMessage("");
 
             const url = new URL(window.location.href);
             url.searchParams.set("mode", mode);
@@ -87,9 +194,7 @@
 
         async function submitForm(event, endpoint) {
             event.preventDefault();
-
-            message.textContent = "Please wait...";
-            message.className = "";
+            showMessage("Please wait...");
 
             const form = event.currentTarget;
             const payload = Object.fromEntries(new FormData(form).entries());
@@ -97,9 +202,7 @@
             try {
                 const response = await fetch("/user/" + endpoint, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    headers: {"Content-Type": "application/json"},
                     body: JSON.stringify(payload)
                 });
 
@@ -110,24 +213,24 @@
                 }
 
                 if (endpoint === "login") {
-                    localStorage.setItem(
-                        "mediaToolsUsername",
-                        result.user.username
-                    );
-                    window.location.href = "/";
+                    localStorage.setItem("mediaToolsUsername", result.user.username);
+                    localStorage.setItem("mediaToolsEmail", result.user.email);
+
+                    window.location.replace("/");
                     return;
                 }
 
                 form.reset();
                 showMode("login");
-                message.textContent =
-                    "Account created successfully. You can now log in.";
-                message.className = "success";
-
+                showMessage(
+                    "Account created successfully. You can now log in.",
+                    "success"
+                );
             } catch (error) {
-                message.textContent =
-                    error.message || "Unable to contact the user service.";
-                message.className = "error";
+                showMessage(
+                    error.message || "Unable to contact the user service.",
+                    "error"
+                );
             }
         }
 
@@ -138,6 +241,47 @@
         loginForm.addEventListener("submit", event =>
             submitForm(event, "login")
         );
+
+        changePasswordForm.addEventListener("submit", async event => {
+            event.preventDefault();
+
+            const payload = Object.fromEntries(
+                new FormData(changePasswordForm).entries()
+            );
+
+            payload.username =
+                localStorage.getItem("mediaToolsUsername") || "";
+
+            try {
+                const response = await fetch("/user/change-password", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || "Password change failed");
+                }
+
+                changePasswordForm.reset();
+                localStorage.removeItem("mediaToolsUsername");
+                localStorage.removeItem("mediaToolsEmail");
+                window.location.replace("/user/?mode=login");
+            } catch (error) {
+                showMessage(error.message || "Password change failed.", "error");
+            }
+        });
+
+        document.getElementById("logout-button").addEventListener("click", () => {
+            localStorage.removeItem("mediaToolsUsername");
+            localStorage.removeItem("mediaToolsEmail");
+            registerForm.reset();
+            loginForm.reset();
+            changePasswordForm.reset();
+            showMode("login");
+        });
 
         const initialMode =
             new URLSearchParams(window.location.search).get("mode");
