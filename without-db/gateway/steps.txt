@@ -3,29 +3,21 @@ docker network create media-tools-network 2>/dev/null || true
 
 docker volume create media-tools-mysql-data
 
-docker run -d \
-  --name media-tools-mysql \
-  --network media-tools-network \
-  --restart unless-stopped \
-  -e MYSQL_ROOT_PASSWORD='ChangeThisRootPassword123!' \
-  -e MYSQL_DATABASE='media_tools' \
-  -e MYSQL_USER='media_user' \
-  -e MYSQL_PASSWORD='ChangeThisAppPassword123!' \
-  -v media-tools-mysql-data:/var/lib/mysql \
-  mysql:8.4
+# Command to build and  run the container 
+docker build --no-cache -t media-tools-gateway:latest . && docker rm -f gateway && docker run -d --name gateway --network media-tools-network --env-file .env -p 5000:5000 --restart unless-stopped media-tools-gateway:latest && docker logs -f gateway
+
+sed -i '/COPY app.py ./a COPY config.py .' Dockerfile
 
 docker ps
 
+========================
 cd ~/website/without-db/gateway
 sed -i 's|AUDIO_CUTTER_URL=.*|AUDIO_CUTTER_URL=http://audio-cutter:5001|; s|AUDIO_JOINER_URL=.*|AUDIO_JOINER_URL=http://audio-joiner:5002|; s|VIDEO_CUTTER_URL=.*|VIDEO_CUTTER_URL=http://video-cutter:5003|; s|AUDIO_TO_VIDEO_URL=.*|AUDIO_TO_VIDEO_URL=http://audio-to-video:5007|' .env
 docker build -t media-tools-gateway:latest .
 docker rm -f media-tools-gateway 2>/dev/null || true
 docker run -d --name media-tools-gateway --network media-tools-network --restart unless-stopped -p 5000:5000 --env-file .env media-tools-gateway:latest
 
-# Command to build and  run the container 
-docker build --no-cache -t media-tools-gateway:latest . && docker rm -f gateway && docker run -d --name gateway --network media-tools-network --env-file .env -p 5000:5000 --restart unless-stopped media-tools-gateway:latest && docker logs -f gateway
 
-sed -i '/COPY app.py ./a COPY config.py .' Dockerfile
 
 
 
