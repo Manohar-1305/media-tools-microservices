@@ -2,3 +2,6 @@ cd ~/website/without-db/audio-to-video
 docker build -t audio-to-video:latest .
 docker rm -f audio-to-video 2>/dev/null || true
 docker run -d --name audio-to-video --network media-tools-network --restart unless-stopped -p 5007:5007 audio-to-video:latest
+
+# build & run the container
+cd /home/ubuntu/media-tools-microservices/without-db/audio-to-video && docker build -t audio-to-video . && (docker rm -f audio-to-video 2>/dev/null || true) && docker run -d --name audio-to-video --network media-tools-network --env-file .env -e PORT=5007 -p 5007:5007 audio-to-video
