@@ -1,19 +1,20 @@
 docker volume create media-mysql-data && docker run -d --name media-mysql --network media-tools-network --restart unless-stopped -p 127.0.0.1:3307:3306 -e MYSQL_ROOT_PASSWORD='CHANGE_ROOT_PASSWORD' -e MYSQL_DATABASE='media_tools' -e MYSQL_USER='media_user' -e MYSQL_PASSWORD='CHANGE_THIS_PASSWORD' -v media-mysql-data:/var/lib/mysql mysql:8.4
 
-
+# Create Redis
 docker volume create media-redis-data
+docker run -d --name redis --network media-tools-network --restart unless-stopped -v media-redis-data:/data redis:7-alpine redis-server --appendonly yes --appendfsync everysec
 
-docker run -d \
-  --name redis \
-  --network media-tools-network \
-  --restart unless-stopped \
-  -v media-redis-data:/data \
-  redis:7-alpine \
-  redis-server --appendonly yes --appendfsync everysec
-
+# Create user microservice
 cd /home/ubuntu/media-tools-microservices/with-db/user-service
 docker build --no-cache -t user:latest .
+docker run -d --name user --network media-tools-network --restart unless-stopped --env-file .env -p 5006:5006 user:latest
 
+# Check logs of container
+docker logs --tail 30 user
+
+
+
+# Create a container
 docker run -d \
   --name user \
   --network media-tools-network \
@@ -29,4 +30,4 @@ docker run -d \
   -p 5006:5006 \
   user:latest
 
-docker logs --tail 30 user
+
