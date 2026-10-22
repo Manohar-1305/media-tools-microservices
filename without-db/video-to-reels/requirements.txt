@@ -1,2 +1,3 @@
 Flask
 imageio-ffmpeg
+redis>=5,<7
