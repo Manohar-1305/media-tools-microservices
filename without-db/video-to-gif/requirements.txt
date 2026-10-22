@@ -2,3 +2,4 @@ Flask
 Pillow
 imageio
 imageio-ffmpeg
+redis>=5,<7
