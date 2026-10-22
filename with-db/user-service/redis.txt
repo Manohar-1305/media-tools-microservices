@@ -11,8 +11,9 @@ docker run -d \
   redis:7-alpine \
   redis-server --appendonly yes --appendfsync everysec
 
+cd /home/ubuntu/media-tools-microservices/with-db/user-service
+docker build --no-cache -t user:latest .
 
-docker build --no-cache -t user:latest 
 docker run -d \
   --name user \
   --network media-tools-network \
