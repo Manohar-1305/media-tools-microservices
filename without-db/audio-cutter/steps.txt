@@ -4,5 +4,8 @@ docker rm -f audio-cutter 2>/dev/null || true
 docker run -d --name audio-cutter --network media-tools-network --restart unless-stopped -p 5001:5001 audio-cutter:latest
 docker network connect media-tools-network audio-cutter
 
+# Enable caching of Redis
+docker exec audio-cutter python -c 'import redis_cache_hooks; print("Redis cache hooks imported successfully")'
+
 curl.exe http://127.0.0.1:5000/audio-cutter/health
 curl.exe http://127.0.0.1:5000/audio-cutter/health
