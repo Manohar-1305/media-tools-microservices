@@ -9,3 +9,6 @@ docker exec audio-cutter python -c 'import redis_cache_hooks; print("Redis cache
 
 curl.exe http://127.0.0.1:5000/audio-cutter/health
 curl.exe http://127.0.0.1:5000/audio-cutter/health
+
+# Check in redis
+docker exec redis redis-cli -a '54412f5ba3ae950d53051902c238f0d46852599833631754068b7e949916d8d7' --scan --pattern 'media-tools:conversion:*' | while read key; do printf '\nKEY: %s\n' "$key"; docker exec redis redis-cli -a '54412f5ba3ae950d53051902c238f0d46852599833631754068b7e949916d8d7' STRLEN "$key"; docker exec redis redis-cli -a '54412f5ba3ae950d53051902c238f0d46852599833631754068b7e949916d8d7' TTL "$key"; done
