@@ -23,6 +23,9 @@ cd /home/ubuntu/media-tools-microservices/without-db/user-service && docker buil
 # Check logs of container
 docker logs --tail 30 user
 
+# Enable caching of Redis
+docker exec audio-cutter python -c 'import redis_cache_hooks; print("Redis cache hooks imported successfully")'
+
 cd /home/ubuntu/media-tools-microservices/with-db/user-service
 docker build --no-cache -t user:latest .
 docker run -d --name user --network media-tools-network --restart unless-stopped --env-file .env -p 5006:5006 user:latest
