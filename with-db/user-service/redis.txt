@@ -8,7 +8,7 @@ docker run -d \
   redis:7-alpine \
   redis-server --appendonly yes --appendfsync everysec
 
-
+docker build --no-cache -t user:latest 
 docker run -d \
   --name user \
   --network media-tools-network \
