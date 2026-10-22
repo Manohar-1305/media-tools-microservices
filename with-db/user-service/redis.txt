@@ -1,3 +1,6 @@
+docker volume create media-mysql-data && docker run -d --name media-mysql --network media-tools-network --restart unless-stopped -p 127.0.0.1:3307:3306 -e MYSQL_ROOT_PASSWORD='CHANGE_ROOT_PASSWORD' -e MYSQL_DATABASE='media_tools' -e MYSQL_USER='media_user' -e MYSQL_PASSWORD='CHANGE_THIS_PASSWORD' -v media-mysql-data:/var/lib/mysql mysql:8.4
+
+
 docker volume create media-redis-data
 
 docker run -d \
@@ -7,6 +10,7 @@ docker run -d \
   -v media-redis-data:/data \
   redis:7-alpine \
   redis-server --appendonly yes --appendfsync everysec
+
 
 docker build --no-cache -t user:latest 
 docker run -d \
