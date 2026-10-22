@@ -1,0 +1,27 @@
+docker volume create media-redis-data
+
+docker run -d \
+  --name redis \
+  --network media-tools-network \
+  --restart unless-stopped \
+  -v media-redis-data:/data \
+  redis:7-alpine \
+  redis-server --appendonly yes --appendfsync everysec
+
+
+docker run -d \
+  --name user \
+  --network media-tools-network \
+  --restart unless-stopped \
+  -e DB_HOST=media-mysql \
+  -e DB_PORT=3306 \
+  -e DB_NAME=media_tools \
+  -e DB_USER=media_user \
+  -e DB_PASSWORD='CHANGE_THIS_PASSWORD' \
+  -e REDIS_HOST=redis \
+  -e REDIS_PORT=6379 \
+  -e REDIS_DB=0 \
+  -p 5006:5006 \
+  user:latest
+
+docker logs --tail 30 user
