@@ -11,6 +11,8 @@ docker volume create redisinsight-data && docker run -d --name redisinsight --ne
 # Test Redis working with app
 curl -s -X POST http://127.0.0.1:5006/login -H 'Content-Type: application/json' -d '{"username":"redis-test-invalid-user","password":"WrongPassword123!"}'; echo; docker exec redis redis-cli -a "$(grep '^REDIS_PASSWORD=' /home/ubuntu/media-tools-microservices/without-db/user-service/.env | cut -d= -f2-)" KEYS 'media-tools:*'
 
+# Incorrect Login
+for email in $(docker exec media-mysql mysql -N -u media_user -p'CHANGE_THIS_PASSWORD' media_tools -e "SELECT email FROM users"); do hash=$(printf '%s' "$email" | tr '[:upper:]' '[:lower:]' | sha256sum | awk '{print $1}'); value=$(docker exec redis redis-cli --no-auth-warning -a "$(grep '^REDIS_PASSWORD=' .env | cut -d= -f2-)" GET "media-tools:login-attempts:$hash"); [ -n "$value" ] && echo "$email: $value failed attempts"; done
 # Create user microservice
 cd /home/ubuntu/media-tools-microservices/with-db/user-service
 docker build --no-cache -t user:latest .
