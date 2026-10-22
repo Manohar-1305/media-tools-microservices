@@ -5,7 +5,7 @@ import hashlib
 import json
 import os
 import redis
-
+from redis_cache import cache_key, cache_get, cache_set
 redis_client = redis.Redis(
     host=os.getenv("REDIS_HOST", "redis"),
     port=int(os.getenv("REDIS_PORT", "6379")),
