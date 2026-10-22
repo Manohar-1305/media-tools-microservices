@@ -1,2 +1,3 @@
 Flask
 Werkzeug
+redis>=5,<7
