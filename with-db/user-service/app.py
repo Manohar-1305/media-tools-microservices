@@ -1,10 +1,12 @@
 import os
 import secrets
 import smtplib
+import hashlib
 from email.message import EmailMessage
 from pathlib import Path
 
 import pymysql
+import redis
 from pymysql.cursors import DictCursor
 
 from flask import Flask, jsonify, request, send_from_directory
@@ -18,6 +20,28 @@ STATIC_DIR = BASE_DIR / "static"
 app = Flask(__name__, static_folder=None)
 app.config.from_object(Config)
 
+redis_client = redis.Redis(
+    host=os.getenv("REDIS_HOST", "redis"),
+    port=int(os.getenv("REDIS_PORT", "6379")),
+    db=int(os.getenv("REDIS_DB", "0")),
+    password=os.getenv("REDIS_PASSWORD") or None,
+    decode_responses=True,
+    socket_connect_timeout=3,
+    socket_timeout=5,
+    health_check_interval=30,
+)
+
+MAX_LOGIN_ATTEMPTS = int(os.getenv("REDIS_LOGIN_MAX_ATTEMPTS", "5"))
+LOGIN_WINDOW_SECONDS = int(os.getenv("REDIS_LOGIN_WINDOW_SECONDS", "900"))
+
+INCREMENT_LOGIN_FAILURE_SCRIPT = """
+local count = redis.call('INCR', KEYS[1])
+if count == 1 then
+    redis.call('EXPIRE', KEYS[1], ARGV[1])
+end
+return count
+"""
+
 
 def get_db():
     return pymysql.connect(
@@ -28,6 +52,29 @@ def get_db():
         database=app.config["DB_NAME"],
         cursorclass=DictCursor,
         autocommit=False,
+    )
+
+
+def get_login_attempt_key(identity):
+    identity_hash = hashlib.sha256(
+        identity.strip().lower().encode("utf-8")
+    ).hexdigest()
+    return f"media-tools:login-attempts:{identity_hash}"
+
+
+def is_login_rate_limited(key):
+    attempts = redis_client.get(key)
+    return attempts is not None and int(attempts) >= MAX_LOGIN_ATTEMPTS
+
+
+def record_failed_login(key):
+    return int(
+        redis_client.eval(
+            INCREMENT_LOGIN_FAILURE_SCRIPT,
+            1,
+            key,
+            LOGIN_WINDOW_SECONDS,
+        )
     )
 
 
@@ -103,7 +150,20 @@ def static_files(filename):
 
 @app.route("/health", methods=["GET"])
 def health():
-    return jsonify(service="user", status="ok"), 200
+    try:
+        redis_client.ping()
+        return jsonify(
+            service="user",
+            status="ok",
+            redis="connected",
+        ), 200
+    except redis.RedisError:
+        app.logger.exception("Redis health check failed")
+        return jsonify(
+            service="user",
+            status="unhealthy",
+            redis="disconnected",
+        ), 503
 
 
 @app.route("/register", methods=["POST"])
@@ -115,10 +175,14 @@ def register():
     password = str(data.get("password", ""))
 
     if not username or not email or not password:
-        return jsonify(error="Username, email and password are required"), 400
+        return jsonify(
+            error="Username, email and password are required"
+        ), 400
 
     if len(password) < 8:
-        return jsonify(error="Password must contain at least 8 characters"), 400
+        return jsonify(
+            error="Password must contain at least 8 characters"
+        ), 400
 
     connection = get_db()
 
@@ -134,7 +198,9 @@ def register():
         connection.commit()
     except pymysql.err.IntegrityError:
         connection.rollback()
-        return jsonify(error="Username or email already exists"), 409
+        return jsonify(
+            error="Username or email already exists"
+        ), 409
     finally:
         connection.close()
 
@@ -151,7 +217,22 @@ def login():
     password = str(data.get("password", ""))
 
     if not username_or_email or not password:
-        return jsonify(error="Username/email and password are required"), 400
+        return jsonify(
+            error="Username/email and password are required"
+        ), 400
+
+    attempt_key = get_login_attempt_key(username_or_email)
+
+    try:
+        if is_login_rate_limited(attempt_key):
+            return jsonify(
+                error="Too many failed login attempts. Try again later."
+            ), 429
+    except redis.RedisError:
+        app.logger.exception("Redis login rate-limit check failed")
+        return jsonify(
+            error="User service temporarily unavailable"
+        ), 503
 
     connection = get_db()
 
@@ -169,8 +250,33 @@ def login():
     finally:
         connection.close()
 
-    if user is None or not check_password_hash(user["password_hash"], password):
-        return jsonify(error="Invalid username/email or password"), 401
+    if user is None or not check_password_hash(
+        user["password_hash"], password
+    ):
+        try:
+            attempts = record_failed_login(attempt_key)
+
+            if attempts >= MAX_LOGIN_ATTEMPTS:
+                return jsonify(
+                    error="Too many failed login attempts. Try again later."
+                ), 429
+        except redis.RedisError:
+            app.logger.exception("Redis failed to record login attempt")
+            return jsonify(
+                error="User service temporarily unavailable"
+            ), 503
+
+        return jsonify(
+            error="Invalid username/email or password"
+        ), 401
+
+    try:
+        redis_client.delete(attempt_key)
+    except redis.RedisError:
+        app.logger.exception("Redis failed to clear login attempts")
+        return jsonify(
+            error="User service temporarily unavailable"
+        ), 503
 
     return jsonify(
         message="Login successful",
@@ -208,8 +314,6 @@ def forgot_password():
         temporary_password = secrets.token_urlsafe(12)
         password_hash = generate_password_hash(temporary_password)
 
-        # Send the email before changing the password, so a failed email
-        # delivery does not lock the user out of their existing password.
         send_temporary_password(email, temporary_password)
 
         with connection.cursor() as cursor:
