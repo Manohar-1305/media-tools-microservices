@@ -1,6 +1,24 @@
 import os
 import subprocess
 from pathlib import Path
+import hashlib
+import json
+import os
+import redis
+
+redis_client = redis.Redis(
+    host=os.getenv("REDIS_HOST", "redis"),
+    port=int(os.getenv("REDIS_PORT", "6379")),
+    db=int(os.getenv("REDIS_DB", "0")),
+    password=os.getenv("REDIS_PASSWORD") or None,
+    decode_responses=False,
+    socket_connect_timeout=3,
+    socket_timeout=5,
+    health_check_interval=30,
+)
+
+CACHE_TTL = int(os.getenv("REDIS_CACHE_TTL", "3600"))
+CACHE_MAX_BYTES = int(os.getenv("REDIS_CACHE_MAX_BYTES", "5242880"))
 
 from flask import Flask, jsonify, request, send_from_directory, Response
 from werkzeug.utils import secure_filename
