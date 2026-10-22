@@ -1,1 +1,2 @@
 Flask
+redis>=5,<7
