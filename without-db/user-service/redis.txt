@@ -23,7 +23,11 @@ cd /home/ubuntu/media-tools-microservices/without-db/user-service && docker buil
 # Check logs of container
 docker logs --tail 30 user
 
+# Import User  into redis
 docker exec user python -c 'import redis_cache_hooks; print("Redis cache hooks imported successfully")'
+
+# Import audio-video into redis
+docker exec audio-to-video python -c 'import redis_cache_hooks; print("Redis cache hooks imported successfully")'
 
 
 
